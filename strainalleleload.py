@@ -97,13 +97,17 @@ qualifiersDict = {}    # dictionary of types for quick lookup
 
 loaddate = loadlib.loaddate
 
-# Purpose: displays correct usage of this program
-# Returns: nothing
-# Assumes: nothing
-# Effects: exits with status of 1
-# Throws: nothing
- 
 def showUsage():
+        '''
+        # requires:
+        #
+        # effects:
+        # Displays the correct usage of this program and exits
+        # with status of 1.
+        #
+        # returns:
+        '''
+
     usage = 'usage: %s -S server\n' % sys.argv[0] + \
         '-D database\n' + \
         '-U user\n' + \
@@ -113,16 +117,17 @@ def showUsage():
 
     exit(1, usage)
  
-# Purpose: prints error message and exits
-# Returns: nothing
-# Assumes: nothing
-# Effects: exits with exit status
-# Throws: nothing
-
-def exit(
-    status,          # numeric exit status (integer)
-    message = None   # exit message (string)
-    ):
+def exit(status, message = None):
+        '''
+        # requires: status, the numeric exit status (integer)
+        #           message (string)
+        #
+        # effects:
+        # Print message to stderr and exits
+        #
+        # returns:
+        #
+        '''
 
     if message is not None:
         sys.stderr.write('\n' + str(message) + '\n')
@@ -139,15 +144,20 @@ def exit(
     db.useOneConnection(0)
     sys.exit(status)
  
-# Purpose: process command line options
-# Returns: nothing
-# Assumes: nothing
-# Effects: initializes global variables
-#          calls showUsage() if usage error
-#          exits if files cannot be opened
-# Throws: nothing
-
 def init():
+        '''
+        # requires: 
+        #
+        # effects: 
+        # 1. Processes command line options
+        # 2. Initializes local DBMS parameters
+        # 3. Initializes global file descriptors/file names
+        # 4. Initializes global keys
+        #
+        # returns:
+        #
+        '''
+
     global diagFile, errorFile, inputFile, errorFileName, diagFileName, passwordFileName
     global mode
     global strainFile
@@ -232,14 +242,20 @@ def init():
 
     return
 
-# Purpose: verify processing mode
-# Returns: nothing
-# Assumes: nothing
-# Effects: if the processing mode is not valid, exits.
-#	   else, sets global variables
-# Throws:  nothing
-
 def verifyMode():
+        '''
+        # requires:
+        #
+        # effects:
+        #       Verifies the processing mode is valid.  If it is not valid,
+        #       the program is aborted.
+        #       Sets globals based on processing mode.
+        #       Deletes data based on processing mode.
+        #
+        # returns:
+        #       nothing
+        #
+        '''
 
     global DEBUG
 
@@ -249,56 +265,78 @@ def verifyMode():
     elif mode != 'load':
         exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
+def verifyQualifier(qualifier, lineNum):
+        '''
+        # requires:
+        #       qualifier - the Qualifier
+        #       lineNum - the line number of the record from the input file
+        #
+        # effects:
+        #       verifies that:
+        #               the Qualifier exists
+        #       writes to the error file if the Qualifier is invalid
+        #
+        # returns:
+        #       0 if the Qualifier is invalid
+        #       Qualifier Key if the Qualifier valid
+        #
+        '''
 
-# Purpose:  verify Qualifier
-# Returns:  Qualifier Key if Qualifier is valid, else 0
-# Assumes:  nothing
-# Effects:  verifies that the Qualifier exists either in the Qualifier dictionary or the database
-#	writes to the error file if the Qualifier is invalid
-#	adds the Qualifier and key to the Qualifier dictionary if the Qualifier is valid
-# Throws:  nothing
+        qualifierKey = 0
 
-def verifyQualifier(
-    qualifier, 	# Qualifier (string)
-    lineNum	# line number (integer)
-    ):
+        if qualifiersDict.has_key(qualifier):
+                qualifierKey = qualifiersDict[qualifier]
+        else:
+                errorFile.write('Invalid Qualifier (%d) %s\n' % (lineNum, qualifier))
+                qualifierKey = 0
 
-    global qualifiersDict
+        return(qualifierKey)
 
-    if len(qualifiersDict) == 0:
+def loadDictionaries():
+        '''
+        # requires:
+        #
+        # effects:
+        #       loads global dictionaries for quicker lookup
+        #
+        # returns:
+        #       nothing
+        '''
+
+        global qualifiersDict
+
         results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 31', 'auto')
-
         for r in results:
-	    qualifiersDict[r['term']] = r['_Qualifier_key']
-
-    if qualifiersDict.has_key(qualifier):
-            qualifierKey = qualifiersDict[qualifier]
-    else:
-            errorFile.write('Invalid Qualifier (%d) %s\n' % (lineNum, qualifier))
-            qualifierKey = 0
-
-    return qualifierKey
-
-# Purpose:  sets global primary key variables
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  sets global primary key variables
-# Throws:   nothing
+		qualifiersDict[r['term']] = r['_Qualifier_key']
 
 def setPrimaryKeys():
+        '''
+        # requires:
+        #
+        # effects:
+        #       Sets the global primary keys values needed for the load
+        #
+        # returns:
+        #       nothing
+        #
+        '''
 
     global strainalleleKey
 
     results = db.sql('select maxKey = max(_StrainMarker_key) + 1 from PRB_Strain_Marker', 'auto')
     strainalleleKey = results[0]['maxKey']
 
-# Purpose:  BCPs the data into the database
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  BCPs the data into the database
-# Throws:   nothing
-
 def bcpFiles():
+        '''
+        # requires:
+        #
+        # effects:
+        #       BCPs the data into the database
+        #
+        # returns:
+        #       nothing
+        #
+        '''
 
     bcpdelim = "|"
 
@@ -318,13 +356,18 @@ def bcpFiles():
 
     return
 
-# Purpose:  processes data
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  verifies and processes each line in the input file
-# Throws:   nothing
-
 def processFile():
+        '''
+        # requires:
+        #
+        # effects:
+        #       Reads input file
+        #       Verifies and Processes each line in the input file
+        #
+        # returns:
+        #       nothing
+        #
+        '''
 
     global strainalleleKey
 
