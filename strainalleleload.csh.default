@@ -1,0 +1,22 @@
+#!/bin/csh -f
+
+#
+# Wrapper script to create & load new strain/marker/allele records
+#
+# Usage:  strainload.csh
+#
+
+setenv SCHEMADIR	/usr/local/mgi/live/dbutils/mgd/mgddbschema
+setenv INPUTFILE	/data/...
+setenv MODE		preview
+setenv STRAINLOAD	/usr/local/mgi/live/dataload/strainload/strainalleleload.py
+
+source ${SCHEMADIR}/Configuration
+setenv LOG	$0.log
+
+date >& $LOG
+
+${STRAINLOAD} -S${DBSERVER} -D${DBNAME} -U${DBUSER} -P${DBPASSWORDFILE} -M${MODE} -I${INPUTFILE} >>& $LOG
+
+date >>& $LOG
+
