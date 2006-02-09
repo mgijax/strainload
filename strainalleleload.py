@@ -386,4 +386,3 @@ processFile()
 bcpFiles()
 exit(0)
 
-# $Log$
