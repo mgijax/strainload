@@ -54,7 +54,7 @@
 # History
 #
 # 02/09/2006	lec
-#	- new, for JRS cutover
+#	- new, for JRS cutover; uses JRS format (for now)
 #
 
 import sys
@@ -98,7 +98,6 @@ qualifiersDict = {}    # dictionary of types for quick lookup
 loaddate = loadlib.loaddate
 
 def showUsage():
-        '''
         # requires:
         #
         # effects:
@@ -106,19 +105,17 @@ def showUsage():
         # with status of 1.
         #
         # returns:
-        '''
 
     usage = 'usage: %s -S server\n' % sys.argv[0] + \
-        '-D database\n' + \
-        '-U user\n' + \
-        '-P password file\n' + \
-        '-M mode\n' + \
-	'-I input file\n'
+	 '-D database\n' + \
+	 '-U user\n' + \
+	 '-P password file\n' + \
+	 '-M mode\n' + \
+	 '-I input file\n'
 
     exit(1, usage)
  
 def exit(status, message = None):
-        '''
         # requires: status, the numeric exit status (integer)
         #           message (string)
         #
@@ -127,7 +124,6 @@ def exit(status, message = None):
         #
         # returns:
         #
-        '''
 
     if message is not None:
         sys.stderr.write('\n' + str(message) + '\n')
@@ -145,7 +141,6 @@ def exit(status, message = None):
     sys.exit(status)
  
 def init():
-        '''
         # requires: 
         #
         # effects: 
@@ -156,7 +151,6 @@ def init():
         #
         # returns:
         #
-        '''
 
     global diagFile, errorFile, inputFile, errorFileName, diagFileName, passwordFileName
     global mode
@@ -194,6 +188,7 @@ def init():
 
     # User must specify Server, Database, User and Password
     password = string.strip(open(passwordFileName, 'r').readline())
+
     if server == '' or database == '' or user == '' or password == '' \
 	or mode == '' or inputFileName == '':
         showUsage()
@@ -243,7 +238,6 @@ def init():
     return
 
 def verifyMode():
-        '''
         # requires:
         #
         # effects:
@@ -255,7 +249,6 @@ def verifyMode():
         # returns:
         #       nothing
         #
-        '''
 
     global DEBUG
 
@@ -266,7 +259,6 @@ def verifyMode():
         exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
 def verifyQualifier(qualifier, lineNum):
-        '''
         # requires:
         #       qualifier - the Qualifier
         #       lineNum - the line number of the record from the input file
@@ -280,7 +272,6 @@ def verifyQualifier(qualifier, lineNum):
         #       0 if the Qualifier is invalid
         #       Qualifier Key if the Qualifier valid
         #
-        '''
 
         qualifierKey = 0
 
@@ -293,7 +284,6 @@ def verifyQualifier(qualifier, lineNum):
         return(qualifierKey)
 
 def loadDictionaries():
-        '''
         # requires:
         #
         # effects:
@@ -301,16 +291,14 @@ def loadDictionaries():
         #
         # returns:
         #       nothing
-        '''
 
         global qualifiersDict
 
         results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 31', 'auto')
         for r in results:
-		qualifiersDict[r['term']] = r['_Qualifier_key']
+		qualifiersDict[r['term']] = r['_Term_key']
 
 def setPrimaryKeys():
-        '''
         # requires:
         #
         # effects:
@@ -319,7 +307,6 @@ def setPrimaryKeys():
         # returns:
         #       nothing
         #
-        '''
 
     global strainalleleKey
 
@@ -327,7 +314,6 @@ def setPrimaryKeys():
     strainalleleKey = results[0]['maxKey']
 
 def bcpFiles():
-        '''
         # requires:
         #
         # effects:
@@ -336,7 +322,6 @@ def bcpFiles():
         # returns:
         #       nothing
         #
-        '''
 
     bcpdelim = "|"
 
@@ -357,7 +342,6 @@ def bcpFiles():
     return
 
 def processFile():
-        '''
         # requires:
         #
         # effects:
@@ -367,7 +351,6 @@ def processFile():
         # returns:
         #       nothing
         #
-        '''
 
     global strainalleleKey
 
@@ -384,11 +367,20 @@ def processFile():
 
         try:
 	    strainID = tokens[0]
-	    alleleID = tokens[1]
-	    qualifier = tokens[2]
-	    user = tokens[3]
+	    alleleID = tokens[3]
+	    qualifier = tokens[4]
+	    user = tokens[5]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
+
+	if len(strainID) == 4:
+	    strainID = '00' + strainID
+	if len(strainID) == 3:
+	    strainID = '000' + strainID
+	if len(strainID) == 2:
+	    strainID = '0000' + strainID
+	if len(strainID) == 1:
+	    strainID = '00000' + strainID
 
 	strainKey = accessionlib.get_Object_key(strainID, _MGIType_key = strainTypeKey)
 	alleleKey = accessionlib.get_Object_key(alleleID, _MGIType_key = alleleTypeKey)
@@ -397,9 +389,11 @@ def processFile():
 
 	markerKey = 0
 	if alleleKey > 0:
-	    results = db.sql("select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 	    if len(results) > 0:
 		markerKey = results[0]['_Marker_key']
+        else:
+	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
 
         if strainKey == 0 or alleleKey == 0 or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
@@ -411,7 +405,7 @@ def processFile():
 
         # if no errors, process
 
-        strainFile.write('%d|%d|%d|%d|%d|%s|%s|%s|%s\n' \
+        strainFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainalleleKey, strainKey, markerKey, alleleKey, qualifierKey, userKey, userKey, loaddate, loaddate))
 
         strainalleleKey = strainalleleKey + 1
@@ -425,6 +419,7 @@ def processFile():
 init()
 verifyMode()
 setPrimaryKeys()
+loadDictionaries()
 processFile()
 bcpFiles()
 exit(0)
