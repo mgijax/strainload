@@ -92,6 +92,7 @@ strainalleleKey = 0           # PRB_Strain._Strain_key
 
 strainTypeKey = 10	# ACC_MGIType._MGIType_key for Strains
 alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
+markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 
 qualifiersDict = {}    # dictionary of types for quick lookup
 
@@ -355,6 +356,8 @@ def processFile():
     global strainalleleKey
 
     lineNum = 0
+    notDeleted = 1
+
     # For each line in the input file
 
     for line in inputFile.readlines():
@@ -382,20 +385,36 @@ def processFile():
 	if len(strainID) == 1:
 	    strainID = '00000' + strainID
 
-	strainKey = accessionlib.get_Object_key(strainID, _MGIType_key = strainTypeKey)
+	# accessionlib.get_Object_key uses ACC_View which assumes the object has an Actual DB record
+
+	results = db.sql('select _Object_key from ACC_Accession where _MGIType_key = %d ' % (strainTypeKey) + \
+		'and accid = "%s"' % (strainID), 'auto')
+	if len(results) > 0:
+	    strainKey = results[0]['_Object_key']
+	else:
+	    strainKey = 0
+
 	alleleKey = accessionlib.get_Object_key(alleleID, _MGIType_key = alleleTypeKey)
+	markerKey = 0
+
+	if alleleKey is None:
+	    markerKey = accessionlib.get_Object_key(alleleID, _MGIType_key = markerTypeKey)
+
 	qualifierKey = verifyQualifier(qualifier, lineNum)
 	userKey = loadlib.verifyUser(user, lineNum, errorFile)
 
-	markerKey = 0
-	if alleleKey > 0:
+	if notDeleted:
+	    db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (userKey), None)
+	    notDeleted = 0
+
+	if alleleKey != None:
 	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 	    if len(results) > 0:
 		markerKey = results[0]['_Marker_key']
-        else:
+        elif markerKey == 0:
 	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
 
-        if strainKey == 0 or alleleKey == 0 or markerKey == 0 or qualifierKey == 0:
+        if strainKey == 0 or alleleKey is None or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
             error = 1
 
@@ -404,6 +423,9 @@ def processFile():
             continue
 
         # if no errors, process
+
+	if alleleKey == None:
+	    alleleKey = ''
 
         strainFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainalleleKey, strainKey, markerKey, alleleKey, qualifierKey, userKey, userKey, loaddate, loaddate))
