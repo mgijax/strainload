@@ -385,20 +385,12 @@ def processFile():
 	if len(strainID) == 1:
 	    strainID = '00000' + strainID
 
-	# accessionlib.get_Object_key uses ACC_View which assumes the object has an Actual DB record
-
-	results = db.sql('select _Object_key from ACC_Accession where _MGIType_key = %d ' % (strainTypeKey) + \
-		'and accid = "%s"' % (strainID), 'auto')
-	if len(results) > 0:
-	    strainKey = results[0]['_Object_key']
-	else:
-	    strainKey = 0
-
-	alleleKey = accessionlib.get_Object_key(alleleID, _MGIType_key = alleleTypeKey)
+	strainKey = loadlib.verifyObject(strainID, strainTypeKey, None, lineNum, errorFile)
+	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
 	markerKey = 0
 
-	if alleleKey is None:
-	    markerKey = accessionlib.get_Object_key(alleleID, _MGIType_key = markerTypeKey)
+	if alleleKey == 0:
+	    markerKey = loadlib.verifyObject(alleleID, markerTypeKey, None, lineNum, errorFile)
 
 	qualifierKey = verifyQualifier(qualifier, lineNum)
 	userKey = loadlib.verifyUser(user, lineNum, errorFile)
@@ -407,14 +399,17 @@ def processFile():
 	    db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (userKey), None)
 	    notDeleted = 0
 
-	if alleleKey != None:
+	# if Allele found, resolve to Marker
+
+	if alleleKey > 0:
 	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 	    if len(results) > 0:
 		markerKey = results[0]['_Marker_key']
+
         elif markerKey == 0:
 	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
 
-        if strainKey == 0 or alleleKey is None or markerKey == 0 or qualifierKey == 0:
+        if strainKey == 0 or alleleKey == 0 or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
             error = 1
 
@@ -424,7 +419,7 @@ def processFile():
 
         # if no errors, process
 
-	if alleleKey == None:
+	if alleleKey == 0:
 	    alleleKey = ''
 
         strainFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
