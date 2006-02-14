@@ -63,7 +63,6 @@ import string
 import getopt
 import db
 import mgi_utils
-import accessionlib
 import loadlib
 
 #globals
