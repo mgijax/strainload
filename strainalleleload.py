@@ -385,6 +385,9 @@ def processFile():
 	    strainID = '00000' + strainID
 
 	strainKey = loadlib.verifyObject(strainID, strainTypeKey, None, lineNum, errorFile)
+
+	# this could generate an error because the ID is a marker, not an allele
+	# just ignore the error in the error file if it gets resolved later
 	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
 	markerKey = 0
 
@@ -407,6 +410,7 @@ def processFile():
 
         elif markerKey == 0:
 	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
+	    error = 1
 
         if strainKey == 0 or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
