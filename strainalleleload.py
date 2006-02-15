@@ -408,7 +408,7 @@ def processFile():
         elif markerKey == 0:
 	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
 
-        if strainKey == 0 or alleleKey == 0 or markerKey == 0 or qualifierKey == 0:
+        if strainKey == 0 or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
             error = 1
 
