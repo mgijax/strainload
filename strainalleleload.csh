@@ -8,9 +8,8 @@
 
 setenv CONFIGFILE $1
 
-cd `dirname $0` && source ${CONFIGFILE}
+source ${CONFIGFILE}
 
-setenv STRAINLOG	$0.log
 rm -rf ${STRAINLOG}
 touch ${STRAINLOG}
 
