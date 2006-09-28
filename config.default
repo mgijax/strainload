@@ -1,0 +1,13 @@
+#!/bin/csh -f
+
+#
+# Synonym load configuration file
+#
+
+source ./Configuration
+
+setenv STRAINMODE		load
+setenv STRAINDATADIR		?
+setenv STRAININPUTFILE		${STRAINDATADIR}/input/?
+setenv STRAINLOG		${STRAINDATADIR}/logs/?
+

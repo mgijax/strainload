@@ -14,13 +14,7 @@
 # Requirements Satisfied by This Program:
 #
 # Usage:
-#	program.py
-#	-S = database server
-#	-D = database
-#	-U = user
-#	-P = password file
-#	-M = mode
-#	-I = input file
+#	strainalleleload.py
 #
 # Envvars:
 #
@@ -60,12 +54,16 @@
 import sys
 import os
 import string
-import getopt
 import db
 import mgi_utils
 import loadlib
 
 #globals
+
+user = os.environ['MGD_DBUSER']
+passwordFileName = os.environ['MGD_DBPASSWORDFILE']
+mode = os.environ['STRAINMODE']
+inputFileName = os.environ['STRAININPUTFILE']
 
 DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
@@ -86,7 +84,6 @@ diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
 passwordFileName = ''	# password file name
 
-mode = ''		# processing mode (load, preview)
 strainalleleKey = 0           # PRB_Strain._Strain_key
 
 strainTypeKey = 10	# ACC_MGIType._MGIType_key for Strains
@@ -97,24 +94,6 @@ qualifiersDict = {}    # dictionary of types for quick lookup
 
 loaddate = loadlib.loaddate
 
-def showUsage():
-        # requires:
-        #
-        # effects:
-        # Displays the correct usage of this program and exits
-        # with status of 1.
-        #
-        # returns:
-
-    usage = 'usage: %s -S server\n' % sys.argv[0] + \
-	 '-D database\n' + \
-	 '-U user\n' + \
-	 '-P password file\n' + \
-	 '-M mode\n' + \
-	 '-I input file\n'
-
-    exit(1, usage)
- 
 def exit(status, message = None):
         # requires: status, the numeric exit status (integer)
         #           message (string)
@@ -152,50 +131,12 @@ def init():
         # returns:
         #
 
-    global diagFile, errorFile, inputFile, errorFileName, diagFileName, passwordFileName
-    global mode
+    global diagFile, errorFile, inputFile, errorFileName, diagFileName
     global strainFile
  
-    try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'S:D:U:P:M:I:')
-    except:
-        showUsage()
- 
-    #
-    # Set server, database, user, passwords depending on options specified
-    #
- 
-    server = ''
-    database = ''
-    user = ''
-    password = ''
- 
-    for opt in optlist:
-        if opt[0] == '-S':
-            server = opt[1]
-        elif opt[0] == '-D':
-            database = opt[1]
-        elif opt[0] == '-U':
-            user = opt[1]
-        elif opt[0] == '-P':
-            passwordFileName = opt[1]
-        elif opt[0] == '-M':
-            mode = opt[1]
-        elif opt[0] == '-I':
-            inputFileName = opt[1]
-        else:
-            showUsage()
-
-    # User must specify Server, Database, User and Password
-    password = string.strip(open(passwordFileName, 'r').readline())
-
-    if server == '' or database == '' or user == '' or password == '' \
-	or mode == '' or inputFileName == '':
-        showUsage()
-
-    # Initialize db.py DBMS parameters
-    db.set_sqlLogin(user, password, server, database)
     db.useOneConnection(1)
+    db.set_sqlUser(user)
+    db.set_sqlPasswordFromFile(passwordFileName)
  
     fdate = mgi_utils.date('%m%d%Y')	# current date
     head, tail = os.path.split(inputFileName) 
@@ -229,9 +170,9 @@ def init():
     db.set_sqlLogFD(diagFile)
 
     diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
+    diagFile.write('Server: %s\n' % (db.get_sqlServer()))
+    diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
     diagFile.write('Server: %s\n' % (server))
-    diagFile.write('Database: %s\n' % (database))
-    diagFile.write('User: %s\n' % (user))
 
     errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
@@ -371,7 +312,7 @@ def processFile():
 	    strainID = tokens[0]
 	    alleleID = tokens[3]
 	    qualifier = tokens[4]
-	    user = tokens[5]
+	    createdBy = tokens[5]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
@@ -395,10 +336,10 @@ def processFile():
 	    markerKey = loadlib.verifyObject(alleleID, markerTypeKey, None, lineNum, errorFile)
 
 	qualifierKey = verifyQualifier(qualifier, lineNum)
-	userKey = loadlib.verifyUser(user, lineNum, errorFile)
+	createdByKey = loadlib.verifyUser(createdBy, lineNum, errorFile)
 
 	if notDeleted:
-	    db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (userKey), None)
+	    db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (createdByKey), None)
 	    notDeleted = 0
 
 	# if Allele found, resolve to Marker
@@ -426,7 +367,7 @@ def processFile():
 	    alleleKey = ''
 
         strainFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-            % (strainalleleKey, strainKey, markerKey, alleleKey, qualifierKey, userKey, userKey, loaddate, loaddate))
+            % (strainalleleKey, strainKey, markerKey, alleleKey, qualifierKey, createdByKey, createdByKey, loaddate, loaddate))
 
         strainalleleKey = strainalleleKey + 1
 
