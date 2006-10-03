@@ -61,7 +61,6 @@ import os
 import string
 import db
 import mgi_utils
-import accessionlib
 
 #globals
 
