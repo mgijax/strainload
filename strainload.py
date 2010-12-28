@@ -10,9 +10,6 @@
 #	To load new Strains into:
 #
 #	PRB_Strain
-#	MLP_Strain
-#	MLP_StrainTypes
-#	MLP_Extra
 #	ACC_Accession
 #
 # Requirements Satisfied by This Program:
@@ -34,12 +31,9 @@
 #
 # Outputs:
 #
-#       5 BCP files:
+#       2 BCP files:
 #
 #       PRB_Strain.bcp                  master Strain records
-#	MLP_Strain.bcp			MLP Strain records
-#	MLP_StrainTypes.bcp		Strain Types
-#	MLP_Extra.bcp			
 #       ACC_Accession.bcp               Accession records
 #
 #       Diagnostics file of all input parameters and SQL commands
@@ -79,21 +73,12 @@ diagFile = ''		# diagnostic file descriptor
 errorFile = ''		# error file descriptor
 inputFile = ''		# file descriptor
 strainFile = ''         # file descriptor
-mlpFile = ''		# file descriptor
-typeFile = ''     	# file descriptor
-extraFile = ''		# file descriptor
 accFile = ''            # file descriptor
 
 strainTable = 'PRB_Strain'
-mlpTable = 'MLP_Strain'
-typeTable = 'MLP_StrainTypes'
-extraTable = 'MLP_Extra'
 accTable = 'ACC_Accession'
 
 strainFileName = strainTable + '.bcp'
-mlpFileName = mlpTable + '.bcp'
-typeFileName = typeTable + '.bcp'
-extraFileName = extraTable + '.bcp'
 accFileName = accTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
@@ -152,7 +137,7 @@ def exit(
 
 def init():
     global diagFile, errorFile, inputFile, errorFileName, diagFileName
-    global strainFile, mlpFile, typeFile, extraFile, accFile
+    global strainFile, accFile
  
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -182,21 +167,6 @@ def init():
         strainFile = open(strainFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % strainFileName)
-
-    try:
-        mlpFile = open(mlpFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % mlpFileName)
-
-    try:
-        typeFile = open(typeFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % typeFileName)
-
-    try:
-        extraFile = open(extraFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % extraFileName)
 
     try:
         accFile = open(accFileName, 'w')
@@ -251,10 +221,10 @@ def verifySpecies(
     global speciesDict
 
     if len(speciesDict) == 0:
-        results = db.sql('select _Species_key, species from MLP_Species', 'auto')
+        results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 26', 'auto')
 
         for r in results:
-	    speciesDict[r['species']] = r['_Species_key']
+	    speciesDict[r['term']] = r['_Term_key']
 
     if speciesDict.has_key(species):
             speciesKey = speciesDict[species]
@@ -280,10 +250,10 @@ def verifyStrainType(
     global strainTypesDict
 
     if len(strainTypesDict) == 0:
-        results = db.sql('select _StrainType_key, strainType from MLP_StrainType', 'auto')
+        results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 27', 'auto')
 
         for r in results:
-	    strainTypesDict[r['strainType']] = r['_StrainType_key']
+	    strainTypesDict[r['term']] = r['_Term_key']
 
     if strainTypesDict.has_key(strainType):
             strainTypeKey = strainTypesDict[strainType]
@@ -327,9 +297,6 @@ def bcpFiles():
         return
 
     strainFile.close()
-    mlpFile.close()
-    typeFile.close()
-    extraFile.close()
     accFile.close()
 
     bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
@@ -337,12 +304,9 @@ def bcpFiles():
     truncateDB = 'dump transaction %s with truncate_only' % (db.get_sqlDatabase())
 
     bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
-    bcp2 = '%s%s in %s %s' % (bcpI, mlpTable, mlpFileName, bcpII)
-    bcp3 = '%s%s in %s %s' % (bcpI, typeTable, typeFileName, bcpII)
-    bcp4 = '%s%s in %s %s' % (bcpI, extraTable, extraFileName, bcpII)
-    bcp5 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
+    bcp2 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
 
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5]:
+    for bcpCmd in [bcp1, bcp2]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
 	db.sql(truncateDB, None)
@@ -400,12 +364,6 @@ def processFile():
 
         strainFile.write('%d|%s|%s|%s|%s|%s|%s\n' \
             % (strainKey, name, isStandard, needsReview, isPrivate, cdate, cdate))
-
-        mlpFile.write('%d|%s|%s|%s|%s|%s\n' % (strainKey, speciesKey, NULL, NULL, cdate, cdate))
-
-        typeFile.write('%d|%s|%s|%s\n' % (strainKey, strainTypeKey, cdate, cdate))
-
-        extraFile.write('%d|%s|%s|%s|%s|%s|%s\n' % (strainKey, NULL, NULL, note1, NULL, cdate, cdate))
 
         # MGI Accession ID for the strain
 

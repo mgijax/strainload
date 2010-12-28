@@ -9,7 +9,7 @@
 #
 #	To load new data into:
 #
-#	PRB_Strain_Allele
+#	PRB_Strain_Marker
 #
 # Requirements Satisfied by This Program:
 #
