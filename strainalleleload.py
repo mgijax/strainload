@@ -82,7 +82,6 @@ strainFileName = strainTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
-passwordFileName = ''	# password file name
 
 strainalleleKey = 0           # PRB_Strain._Strain_key
 
@@ -172,7 +171,6 @@ def init():
     diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
     diagFile.write('Server: %s\n' % (db.get_sqlServer()))
     diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
-    diagFile.write('Server: %s\n' % (server))
 
     errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
@@ -310,9 +308,9 @@ def processFile():
 
         try:
 	    strainID = tokens[0]
-	    alleleID = tokens[3]
-	    qualifier = tokens[4]
-	    createdBy = tokens[5]
+	    alleleID = tokens[1]
+	    qualifier = tokens[2]
+	    createdBy = tokens[3]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 

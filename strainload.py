@@ -22,12 +22,15 @@
 # Inputs:
 #
 #	A tab-delimited file in the format:
-#		field 1: Strain Name
-#		field 2: Strain Type
-#		field 3: Strain Species
-#		field 4: Standard (1/0)
-#		field 5: Note 1
-#		field 6: Created By
+#		field 1: Strain id
+#		field 2: Strain Name
+#		field 3: Strain Type
+#		field 4: Strain Species
+#		field 5: Standard (1/0)
+#		field 6: Note 1
+#		field 7: External Logical DB key
+#		field 8: External MGI Type key
+#		field 9: Created By
 #
 # Outputs:
 #
@@ -55,6 +58,7 @@ import os
 import string
 import db
 import mgi_utils
+import loadlib
 
 #globals
 
@@ -83,13 +87,11 @@ accFileName = accTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
-passwordFileName = ''	# password file name
 
 strainKey = 0           # PRB_Strain._Strain_key
 accKey = 0              # ACC_Accession._Accession_key
 mgiKey = 0              # ACC_AccessionMax.maxNumericPart
 
-needsReview = 0
 isPrivate = 0
 NULL = ''
 
@@ -335,24 +337,29 @@ def processFile():
         tokens = string.split(line[:-1], '\t')
 
         try:
-	    name = tokens[0]
-	    strainType = tokens[1]
-	    species = tokens[2]
-	    isStandard = tokens[3]
-	    note1 = tokens[4]
-	    createdBy = tokens[5]
+	    id = tokens[0]
+	    (externalPrefix, externalNumeric) = string.split(id, ':')
+	    name = tokens[1]
+	    strainType = tokens[2]
+	    species = tokens[3]
+	    isStandard = tokens[4]
+	    note1 = tokens[5]
+	    externalLDB = tokens[6]
+            externalTypeKey = tokens[7]
+	    createdBy = tokens[8]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
 	strainTypeKey = verifyStrainType(strainType, lineNum)
 	speciesKey = verifySpecies(species, lineNum)
+	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
 
 	if isStandard == 'y':
 		isStandard = '1'
 	else:
 		isStandard = '0'
 
-        if strainTypeKey == 0 or speciesKey == 0:
+        if strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
             # set error flag to true
             error = 1
 
@@ -362,17 +369,25 @@ def processFile():
 
         # if no errors, process
 
-        strainFile.write('%d|%s|%s|%s|%s|%s|%s\n' \
-            % (strainKey, name, isStandard, needsReview, isPrivate, cdate, cdate))
+        strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+            % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, 
+	       createdByKey, createdByKey, cdate, cdate))
 
         # MGI Accession ID for the strain
 
-	if isStandard == '1':
-          accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s\n' \
-              % (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, cdate, cdate, cdate))
+        accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
+          % (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
+	     createdByKey, createdByKey, cdate, cdate))
+        accKey = accKey + 1
 
-          accKey = accKey + 1
-          mgiKey = mgiKey + 1
+        # external accession id
+
+        accFile.write('%d|%s|%s|%s|%s|%s|%s|0|1|%s|%s|%s|%s\n' \
+          % (accKey, id, externalPrefix, externalNumeric, externalLDB, strainKey, externalTypeKey, 
+	     createdByKey, createdByKey, cdate, cdate))
+        accKey = accKey + 1
+
+        mgiKey = mgiKey + 1
 
         strainKey = strainKey + 1
 
