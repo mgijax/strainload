@@ -10,6 +10,7 @@
 #	To load new Strains into:
 #
 #	PRB_Strain
+#	PRB_Strain_Marker
 #	ACC_Accession
 #
 # Requirements Satisfied by This Program:
@@ -24,19 +25,21 @@
 #	A tab-delimited file in the format:
 #		field 1: Strain id
 #		field 2: Strain Name
-#		field 3: Strain Type
-#		field 4: Strain Species
-#		field 5: Standard (1/0)
-#		field 6: Note 1
-#		field 7: External Logical DB key
-#		field 8: External MGI Type key
-#		field 9: Created By
+#		field 3: MGI Allele ID
+#		field 4: Strain Type
+#		field 5: Strain Species
+#		field 6: Standard (1/0)
+#		field 7: Note 1
+#		field 8: External Logical DB key
+#		field 9: External MGI Type key
+#		field 10: Created By
 #
 # Outputs:
 #
-#       2 BCP files:
+#       3 BCP files:
 #
 #       PRB_Strain.bcp                  master Strain records
+#       PRB_Strain_Marker.bcp                  master Strain records
 #       ACC_Accession.bcp               Accession records
 #
 #       Diagnostics file of all input parameters and SQL commands
@@ -77,28 +80,37 @@ diagFile = ''		# diagnostic file descriptor
 errorFile = ''		# error file descriptor
 inputFile = ''		# file descriptor
 strainFile = ''         # file descriptor
+markerFile = ''         # file descriptor
 accFile = ''            # file descriptor
 
 strainTable = 'PRB_Strain'
+markerTable = 'PRB_Strain_Marker'
 accTable = 'ACC_Accession'
 
 strainFileName = strainTable + '.bcp'
+markerFileName = markerTable + '.bcp'
 accFileName = accTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
 
 strainKey = 0           # PRB_Strain._Strain_key
+strainmarkerKey = 0	# PRB_Strain_Marker._StrainMarker_key
 accKey = 0              # ACC_Accession._Accession_key
 mgiKey = 0              # ACC_AccessionMax.maxNumericPart
 
 isPrivate = 0
 NULL = ''
 
-mgiTypeKey = 10		# Strains
+mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
 mgiPrefix = "MGI:"
+alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
+markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 
-strainTypesDict = {}      	# dictionary of types for quick lookup
+qualifierKey = 481373	# nomenclature
+
+strainDict = {}      	# dictionary of types for quick lookup
+strainTypesDict = {}    # dictionary of types for quick lookup
 speciesDict = {}      	# dictionary of species for quick lookup
 
 cdate = mgi_utils.date('%m/%d/%Y')	# current date
@@ -139,7 +151,7 @@ def exit(
 
 def init():
     global diagFile, errorFile, inputFile, errorFileName, diagFileName
-    global strainFile, accFile
+    global strainFile, markerFile, accFile
  
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -169,6 +181,11 @@ def init():
         strainFile = open(strainFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % strainFileName)
+
+    try:
+        markerFile = open(markerFileName, 'w')
+    except:
+        exit(1, 'Could not open file %s\n' % markerFileName)
 
     try:
         accFile = open(accFileName, 'w')
@@ -265,6 +282,34 @@ def verifyStrainType(
 
     return strainTypeKey
 
+# Purpose:  verify Strain
+# Returns:  Strain Key if Strain is valid, else 0
+# Assumes:  nothing
+# Effects:  verifies that the Strain exists either in the Strain dictionary or the database
+#	writes to the error file if the Strain is invalid
+#	adds the Strain and key to the Strain dictionary if the Strain Type is valid
+# Throws:  nothing
+
+def verifyStrain(
+    strain, 	# Strain (string)
+    lineNum	# line number (integer)
+    ):
+
+    global strainDict
+
+    results = db.sql('select _Strain_key, strain from PRB_Strain where strain = "%s"' % (strain), 'auto')
+
+    for r in results:
+        strainDict[r['strain']] = r['_Strain_key']
+
+    if strainDict.has_key(strain):
+            strainExistKey = strainDict[strain]
+    else:
+            errorFile.write('Invalid Strain (%d) %s\n' % (lineNum, strain))
+            strainExistKey = 0
+
+    return strainExistKey
+
 # Purpose:  sets global primary key variables
 # Returns:  nothing
 # Assumes:  nothing
@@ -273,10 +318,13 @@ def verifyStrainType(
 
 def setPrimaryKeys():
 
-    global strainKey, accKey, mgiKey
+    global strainKey, strainmarkerKey, accKey, mgiKey
 
     results = db.sql('select maxKey = max(_Strain_key) + 1 from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
+
+    results = db.sql('select maxKey = max(_StrainMarker_key) + 1 from PRB_Strain_Marker', 'auto')
+    strainmarkerKey = results[0]['maxKey']
 
     results = db.sql('select maxKey = max(_Accession_key) + 1 from ACC_Accession', 'auto')
     accKey = results[0]['maxKey']
@@ -299,6 +347,7 @@ def bcpFiles():
         return
 
     strainFile.close()
+    markerFile.close()
     accFile.close()
 
     bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
@@ -306,9 +355,10 @@ def bcpFiles():
     truncateDB = 'dump transaction %s with truncate_only' % (db.get_sqlDatabase())
 
     bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
-    bcp2 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
+    bcp2 = '%s%s in %s %s' % (bcpI, markerTable, markerFileName, bcpII)
+    bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
 
-    for bcpCmd in [bcp1, bcp2]:
+    for bcpCmd in [bcp1, bcp2, bcp3]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
 	db.sql(truncateDB, None)
@@ -323,7 +373,7 @@ def bcpFiles():
 
 def processFile():
 
-    global strainKey, accKey, mgiKey
+    global strainKey, strainmarkerKey, accKey, mgiKey
 
     lineNum = 0
     # For each line in the input file
@@ -340,16 +390,19 @@ def processFile():
 	    id = tokens[0]
 	    (externalPrefix, externalNumeric) = string.split(id, ':')
 	    name = tokens[1]
-	    strainType = tokens[2]
-	    species = tokens[3]
-	    isStandard = tokens[4]
-	    note1 = tokens[5]
-	    externalLDB = tokens[6]
-            externalTypeKey = tokens[7]
-	    createdBy = tokens[8]
+	    alleleID = tokens[2]
+	    strainType = tokens[3]
+	    species = tokens[4]
+	    isStandard = tokens[5]
+	    note1 = tokens[6]
+	    externalLDB = tokens[7]
+            externalTypeKey = tokens[8]
+	    createdBy = tokens[9]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
+	strainExistKey = verifyStrain(name, lineNum)
+	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
 	strainTypeKey = verifyStrainType(strainType, lineNum)
 	speciesKey = verifySpecies(species, lineNum)
 	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
@@ -359,7 +412,14 @@ def processFile():
 	else:
 		isStandard = '0'
 
-        if strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
+	# if Allele found, resolve to Marker
+
+	if alleleKey > 0:
+	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+	    if len(results) > 0:
+		markerKey = results[0]['_Marker_key']
+
+        if strainExistKey > 0 or markerKey == 0 or strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
             # set error flag to true
             error = 1
 
@@ -371,6 +431,10 @@ def processFile():
 
         strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, 
+	       createdByKey, createdByKey, cdate, cdate))
+
+	markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+	    % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
 	       createdByKey, createdByKey, cdate, cdate))
 
         # MGI Accession ID for the strain
@@ -390,6 +454,7 @@ def processFile():
         mgiKey = mgiKey + 1
 
         strainKey = strainKey + 1
+	strainmarkerKey = strainmarkerKey + 1
 
     #	end of "for line in inputFile.readlines():"
 
