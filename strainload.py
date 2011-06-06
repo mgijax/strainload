@@ -107,7 +107,7 @@ mgiPrefix = "MGI:"
 alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
 markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 
-qualifierKey = 481373	# nomenclature
+qualifierKey = 615427	# nomenclature
 
 strainDict = {}      	# dictionary of types for quick lookup
 strainTypesDict = {}    # dictionary of types for quick lookup
@@ -304,8 +304,9 @@ def verifyStrain(
 
     if strainDict.has_key(strain):
             strainExistKey = strainDict[strain]
+            errorFile.write('Strain Already Exists (%d) %s\n' % (lineNum, strain))
     else:
-            errorFile.write('Invalid Strain (%d) %s\n' % (lineNum, strain))
+            #errorFile.write('Invalid Strain (%d) %s\n' % (lineNum, strain))
             strainExistKey = 0
 
     return strainExistKey
