@@ -41,6 +41,7 @@
 #       PRB_Strain.bcp                  master Strain records
 #       PRB_Strain_Marker.bcp                  master Strain records
 #       ACC_Accession.bcp               Accession records
+#       VOC_Annot.bcp
 #
 #       Diagnostics file of all input parameters and SQL commands
 #       Error file
@@ -82,14 +83,17 @@ inputFile = ''		# file descriptor
 strainFile = ''         # file descriptor
 markerFile = ''         # file descriptor
 accFile = ''            # file descriptor
+annotFile = ''          # file descriptor
 
 strainTable = 'PRB_Strain'
 markerTable = 'PRB_Strain_Marker'
 accTable = 'ACC_Accession'
+annotTable = 'VOC_Annot'
 
 strainFileName = strainTable + '.bcp'
 markerFileName = markerTable + '.bcp'
 accFileName = accTable + '.bcp'
+annotFileName = annotTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
@@ -98,6 +102,7 @@ strainKey = 0           # PRB_Strain._Strain_key
 strainmarkerKey = 0	# PRB_Strain_Marker._StrainMarker_key
 accKey = 0              # ACC_Accession._Accession_key
 mgiKey = 0              # ACC_AccessionMax.maxNumericPart
+annotKey = 0
 
 isPrivate = 0
 NULL = ''
@@ -151,7 +156,7 @@ def exit(
 
 def init():
     global diagFile, errorFile, inputFile, errorFileName, diagFileName
-    global strainFile, markerFile, accFile
+    global strainFile, markerFile, accFile, annotFile
  
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -191,6 +196,11 @@ def init():
         accFile = open(accFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % accFileName)
+
+    try:
+        annotFile = open(annotFileName, 'w')
+    except:
+        exit(1, 'Could not open file %s\n' % annotFileName)
 
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
@@ -319,7 +329,7 @@ def verifyStrain(
 
 def setPrimaryKeys():
 
-    global strainKey, strainmarkerKey, accKey, mgiKey
+    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey
 
     results = db.sql('select maxKey = max(_Strain_key) + 1 from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
@@ -333,6 +343,9 @@ def setPrimaryKeys():
     results = db.sql('select maxKey = maxNumericPart + 1 from ACC_AccessionMax ' + \
         'where prefixPart = "%s"' % (mgiPrefix), 'auto')
     mgiKey = results[0]['maxKey']
+
+    results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
+    annotKey = results[0]['maxKey']
 
 # Purpose:  BCPs the data into the database
 # Returns:  nothing
@@ -350,6 +363,7 @@ def bcpFiles():
     strainFile.close()
     markerFile.close()
     accFile.close()
+    annotFile.close()
 
     bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
     bcpII = '-c -t\"|" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
@@ -358,8 +372,9 @@ def bcpFiles():
     bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
     bcp2 = '%s%s in %s %s' % (bcpI, markerTable, markerFileName, bcpII)
     bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
+    bcp4 = '%s%s in %s %s' % (bcpI, annotTable, annotFileName, bcpII)
 
-    for bcpCmd in [bcp1, bcp2, bcp3]:
+    for bcpCmd in [bcp1, bcp2, bcp3, bcp4]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
 	db.sql(truncateDB, None)
@@ -374,7 +389,7 @@ def bcpFiles():
 
 def processFile():
 
-    global strainKey, strainmarkerKey, accKey, mgiKey
+    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey
 
     lineNum = 0
     # For each line in the input file
@@ -452,8 +467,45 @@ def processFile():
 	     createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
-        mgiKey = mgiKey + 1
+	#
+	# hard-coded this TR10648 (for now)
+	#
+	# _AnnotType_key = 1009
+	# _Qualifier_ke = 1614158
+	#
 
+	if id in ('MMRRC:032108', 'MMRRC:032109', 'MMRRC:034258', 'MMRRC:034259'):
+	    # B6
+	    # 481360 MGI:4265634 congenic
+	    # 481371 MGI:4265645 mutant strain
+	    # 481384 MGI:4265658 transgenic
+
+            annotFile.write('%s|1009|%s|481360|1614158|%s|%s\n' \
+              % (annotKey, strainKey, cdate, cdate))
+            annotKey = annotKey + 1
+
+            annotFile.write('%s|1009|%s|481371|1614158|%s|%s\n' \
+              % (annotKey, strainKey, cdate, cdate))
+            annotKey = annotKey + 1
+
+            annotFile.write('%s|1009|%s|481384|1614158|%s|%s\n' \
+              % (annotKey, strainKey, cdate, cdate))
+            annotKey = annotKey + 1
+
+	else:
+	    # STOCK
+	    # 481370 MGI:4265644 mutant stock
+	    # 481384 MGI:4265658 transgenic
+
+            annotFile.write('%s|1009|%s|481370|1614158|%s|%s\n' \
+              % (annotKey, strainKey, cdate, cdate))
+            annotKey = annotKey + 1
+
+            annotFile.write('%s|1009|%s|481384|1614158|%s|%s\n' \
+              % (annotKey, strainKey, cdate, cdate))
+            annotKey = annotKey + 1
+
+        mgiKey = mgiKey + 1
         strainKey = strainKey + 1
 	strainmarkerKey = strainmarkerKey + 1
 
