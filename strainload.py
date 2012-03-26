@@ -12,6 +12,8 @@
 #	PRB_Strain
 #	PRB_Strain_Marker
 #	ACC_Accession
+#	VOC_Annot
+#	MGI_Note/MGI_NoteChunk
 #
 # Requirements Satisfied by This Program:
 #
@@ -23,25 +25,27 @@
 # Inputs:
 #
 #	A tab-delimited file in the format:
-#		field 1: Strain id
-#		field 2: Strain Name
-#		field 3: MGI Allele ID
-#		field 4: Strain Type
-#		field 5: Strain Species
-#		field 6: Standard (1/0)
-#		field 7: Note 1
-#		field 8: External Logical DB key
-#		field 9: External MGI Type key
-#		field 10: Created By
+#		field 1:  Strain id
+#		field 2:  Strain Name
+#		field 3:  MGI Allele ID
+#		field 4:  Strain Type
+#		field 5:  Strain Species
+#		field 6:  Standard (1/0)
+#		field 7:  Strain of Origin Note
+#		field 8:  External Logical DB key
+#		field 9:  External MGI Type key
+#		field 10: Strain Attributes (xxxxx|xxxxx)
+#		field 11: Created By
 #
 # Outputs:
 #
-#       3 BCP files:
+#       4 BCP files:
 #
 #       PRB_Strain.bcp                  master Strain records
 #       PRB_Strain_Marker.bcp                  master Strain records
 #       ACC_Accession.bcp               Accession records
 #       VOC_Annot.bcp
+#       MGI_Note/MGI_NoteChunk          strain of origin notes
 #
 #       Diagnostics file of all input parameters and SQL commands
 #       Error file
@@ -52,14 +56,14 @@
 #
 #	That no one else is adding records to the database.
 #
-# Bugs:
+# History
 #
-# Implementation:
+# lec	03/26/2012
+#	- TR11015/Gensat
 #
 
 import sys
 import os
-import string
 import db
 import mgi_utils
 import loadlib
@@ -69,7 +73,7 @@ import loadlib
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['STRAINMODE']
-inputFileName = os.environ['STRAININPUTFILE']
+inputFileName = os.environ['STRAINDATAFILE']
 
 DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
@@ -84,16 +88,22 @@ strainFile = ''         # file descriptor
 markerFile = ''         # file descriptor
 accFile = ''            # file descriptor
 annotFile = ''          # file descriptor
+noteFile = ''           # file descriptor
+noteChunkFile = ''      # file descriptor
 
 strainTable = 'PRB_Strain'
 markerTable = 'PRB_Strain_Marker'
 accTable = 'ACC_Accession'
 annotTable = 'VOC_Annot'
+noteTable = 'MGI_Note'
+noteChunkTable = 'MGI_NoteChunk'
 
 strainFileName = strainTable + '.bcp'
 markerFileName = markerTable + '.bcp'
 accFileName = accTable + '.bcp'
 annotFileName = annotTable + '.bcp'
+noteFileName = noteTable + '.bcp'
+noteChunkFileName = noteChunkTable + '.bcp'
 
 diagFileName = ''	# diagnostic file name
 errorFileName = ''	# error file name
@@ -103,6 +113,7 @@ strainmarkerKey = 0	# PRB_Strain_Marker._StrainMarker_key
 accKey = 0              # ACC_Accession._Accession_key
 mgiKey = 0              # ACC_AccessionMax.maxNumericPart
 annotKey = 0
+noteKey = 0             # MGI_Note._Note_key
 
 isPrivate = 0
 NULL = ''
@@ -111,6 +122,9 @@ mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
 mgiPrefix = "MGI:"
 alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
 markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
+mgiNoteObjectKey = 10   # MGI_Note._MGIType_key
+mgiNoteSeqNum = 1       # MGI_NoteChunk.sequenceNum
+mgiStrainOriginTypeKey = 1011   # MGI_Note._NoteType_key
 
 qualifierKey = 615427	# nomenclature
 
@@ -157,6 +171,7 @@ def exit(
 def init():
     global diagFile, errorFile, inputFile, errorFileName, diagFileName
     global strainFile, markerFile, accFile, annotFile
+    global noteFile, noteChunkFile
  
     db.useOneConnection(1)
     db.set_sqlUser(user)
@@ -196,6 +211,16 @@ def init():
         accFile = open(accFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % accFileName)
+
+    try:
+        noteFile = open(noteFileName, 'w')
+    except:
+        exit(1, 'Could not open file %s\n' % noteFileName)
+
+    try:
+        noteChunkFile = open(noteChunkFileName, 'w')
+    except:
+        exit(1, 'Could not open file %s\n' % noteChunkFileName)
 
     try:
         annotFile = open(annotFileName, 'w')
@@ -329,7 +354,7 @@ def verifyStrain(
 
 def setPrimaryKeys():
 
-    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey
+    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey, noteKey
 
     results = db.sql('select maxKey = max(_Strain_key) + 1 from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
@@ -346,6 +371,9 @@ def setPrimaryKeys():
 
     results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
     annotKey = results[0]['maxKey']
+
+    results = db.sql('select maxKey = max(_Note_key) + 1 from MGI_Note', 'auto')
+    noteKey = results[0]['maxKey']
 
 # Purpose:  BCPs the data into the database
 # Returns:  nothing
@@ -364,6 +392,8 @@ def bcpFiles():
     markerFile.close()
     accFile.close()
     annotFile.close()
+    noteFile.close()
+    noteChunkFile.close()
 
     bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
     bcpII = '-c -t\"|" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
@@ -373,8 +403,10 @@ def bcpFiles():
     bcp2 = '%s%s in %s %s' % (bcpI, markerTable, markerFileName, bcpII)
     bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
     bcp4 = '%s%s in %s %s' % (bcpI, annotTable, annotFileName, bcpII)
+    bcp5 = '%s%s in %s %s' % (bcpI, noteTable, noteFileName, bcpII)
+    bcp6 = '%s%s in %s %s' % (bcpI, noteChunkTable, noteChunkFileName, bcpII)
 
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4]:
+    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
 	db.sql(truncateDB, None)
@@ -389,7 +421,7 @@ def bcpFiles():
 
 def processFile():
 
-    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey
+    global strainKey, strainmarkerKey, accKey, mgiKey, annotKey, noteKey
 
     lineNum = 0
     # For each line in the input file
@@ -400,20 +432,21 @@ def processFile():
         lineNum = lineNum + 1
 
         # Split the line into tokens
-        tokens = string.split(line[:-1], '\t')
+        tokens = line[:-1].split('\t')
 
         try:
 	    id = tokens[0]
-	    (externalPrefix, externalNumeric) = string.split(id, ':')
+	    (externalPrefix, externalNumeric) = id.split(':')
 	    name = tokens[1]
 	    alleleID = tokens[2]
 	    strainType = tokens[3]
 	    species = tokens[4]
 	    isStandard = tokens[5]
-	    note1 = tokens[6]
+	    sooNote = tokens[6]
 	    externalLDB = tokens[7]
             externalTypeKey = tokens[8]
-	    createdBy = tokens[9]
+	    annotations = tokens[9].split('|')
+	    createdBy = tokens[10]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
@@ -467,42 +500,49 @@ def processFile():
 	     createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
+        # storing data in MGI_Note/MGI_NoteChunk
+        # Strain of Origin Note
+
+        mgiNoteSeqNum = 1
+        if len(sooNote) > 0:
+
+            noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, strainKey, mgiNoteObjectKey, mgiStrainOriginTypeKey, \
+                   createdByKey, createdByKey, cdate, cdate))
+
+            while len(sooNote) > 255:
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                    % (noteKey, mgiNoteSeqNum, sooNote[:255], createdByKey, createdByKey, cdate, cdate))
+                sooNote = sooNote[255:]
+                mgiNoteSeqNum = mgiNoteSeqNum + 1
+
+            if len(sooNote) > 0:
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                    % (noteKey, mgiNoteSeqNum, sooNote, createdByKey, createdByKey, cdate, cdate))
+
+            noteKey = noteKey + 1
+
 	#
-	# hard-coded this TR10648 (for now)
-	#
+        # Annotations
+        #
 	# _AnnotType_key = 1009
 	# _Qualifier_ke = 1614158
 	#
 
-	if id in ('MMRRC:032108', 'MMRRC:032109', 'MMRRC:034258', 'MMRRC:034259'):
-	    # B6
-	    # 481360 MGI:4265634 congenic
-	    # 481371 MGI:4265645 mutant strain
-	    # 481384 MGI:4265658 transgenic
+	for a in annotations:
 
-            annotFile.write('%s|1009|%s|481360|1614158|%s|%s\n' \
-              % (annotKey, strainKey, cdate, cdate))
-            annotKey = annotKey + 1
+	    # strain annotation type
+	    annotTypeKey = 1009
 
-            annotFile.write('%s|1009|%s|481371|1614158|%s|%s\n' \
-              % (annotKey, strainKey, cdate, cdate))
-            annotKey = annotKey + 1
+	    # this is a null qualifier key
+	    annotQualifierKey = 1614158
 
-            annotFile.write('%s|1009|%s|481384|1614158|%s|%s\n' \
-              % (annotKey, strainKey, cdate, cdate))
-            annotKey = annotKey + 1
+	    annotTermKey = loadlib.verifyTerm('', 27, a, lineNum, errorFile)
+	    if annotTermKey == 0:
+		continue
 
-	else:
-	    # STOCK
-	    # 481370 MGI:4265644 mutant stock
-	    # 481384 MGI:4265658 transgenic
-
-            annotFile.write('%s|1009|%s|481370|1614158|%s|%s\n' \
-              % (annotKey, strainKey, cdate, cdate))
-            annotKey = annotKey + 1
-
-            annotFile.write('%s|1009|%s|481384|1614158|%s|%s\n' \
-              % (annotKey, strainKey, cdate, cdate))
+            annotFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+              % (annotKey, annotTypeKey, strainKey, annotTermKey, annotQualifierKey, cdate, cdate))
             annotKey = annotKey + 1
 
         mgiKey = mgiKey + 1
