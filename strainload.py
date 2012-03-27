@@ -404,12 +404,21 @@ def bcpFiles():
     bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
     bcp4 = '%s%s in %s %s' % (bcpI, annotTable, annotFileName, bcpII)
     bcp5 = '%s%s in %s %s' % (bcpI, noteTable, noteFileName, bcpII)
-    bcp6 = '%s%s in %s %s' % (bcpI, noteChunkTable, noteChunkFileName, bcpII)
 
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
+    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
 	db.sql(truncateDB, None)
+
+    #
+    # for MGI_NoteChunk use -t, -r to set field and line numbers
+    # so that "\n" can exist in the "note" itself
+    #
+    bcpII = '-c -t\"&=&" -r"#=#\n" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
+    bcp6 = '%s%s in %s %s' % (bcpI, noteChunkTable, noteChunkFileName, bcpII)
+    diagFile.write('%s\n' % bcp6)
+    os.system(bcp6)
+    db.sql(truncateDB, None)
 
     return
 
@@ -503,6 +512,14 @@ def processFile():
         # storing data in MGI_Note/MGI_NoteChunk
         # Strain of Origin Note
 
+	# this stuff will convert the carriage returns coorectly
+        noteTokens = sooNote.split('\\n')
+        newNotes = ''
+        for n in noteTokens:
+            newNotes = newNotes + n + chr(10)
+	sooNote = newNotes
+        print sooNote
+
         mgiNoteSeqNum = 1
         if len(sooNote) > 0:
 
@@ -511,13 +528,15 @@ def processFile():
                    createdByKey, createdByKey, cdate, cdate))
 
             while len(sooNote) > 255:
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
                     % (noteKey, mgiNoteSeqNum, sooNote[:255], createdByKey, createdByKey, cdate, cdate))
                 sooNote = sooNote[255:]
                 mgiNoteSeqNum = mgiNoteSeqNum + 1
 
             if len(sooNote) > 0:
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
                     % (noteKey, mgiNoteSeqNum, sooNote, createdByKey, createdByKey, cdate, cdate))
 
             noteKey = noteKey + 1
