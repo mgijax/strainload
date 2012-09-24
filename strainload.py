@@ -28,13 +28,13 @@
 #		field 1:  Strain id
 #		field 2:  Strain Name
 #		field 3:  MGI Allele ID
-#		field 4:  Strain Type
-#		field 5:  Strain Species
+#		field 4:  Strain Type (ex. 'coisogenic', 'congenic', 'conplastic')
+#		field 5:  Strain Species (ex. 'laboratory mouse')
 #		field 6:  Standard (1/0)
 #		field 7:  Strain of Origin Note
 #		field 8:  External Logical DB key
 #		field 9:  External MGI Type key
-#		field 10: Strain Attributes (xxxxx|xxxxx)
+#		field 10: Strain Attributes (xxxxx|xxxxx) (ex. 'chromosome aberration', 'closed colony')
 #		field 11: Created By
 #
 # Outputs:
@@ -518,7 +518,6 @@ def processFile():
         for n in noteTokens:
             newNotes = newNotes + n + chr(10)
 	sooNote = newNotes
-        print sooNote
 
         mgiNoteSeqNum = 1
         if len(sooNote) > 0:
