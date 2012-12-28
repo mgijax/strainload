@@ -73,7 +73,7 @@ import loadlib
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['STRAINMODE']
-inputFileName = os.environ['STRAINDATAFILE']
+inputFileName = os.environ['STRAININPUTFILE']
 
 DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
