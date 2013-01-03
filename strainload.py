@@ -445,7 +445,7 @@ def processFile():
 
         try:
 	    id = tokens[0]
-	    (externalPrefix, externalNumeric) = id.split(':')
+	    #(externalPrefix, externalNumeric) = id.split(':')
 	    name = tokens[1]
 	    alleleID = tokens[2]
 	    strainType = tokens[3]
@@ -503,9 +503,11 @@ def processFile():
         accKey = accKey + 1
 
         # external accession id
+	# for ids that contain prefix:numeric
+          #% (accKey, id, externalPrefix, externalNumeric, externalLDB, strainKey, externalTypeKey, 
 
         accFile.write('%d|%s|%s|%s|%s|%s|%s|0|1|%s|%s|%s|%s\n' \
-          % (accKey, id, externalPrefix, externalNumeric, externalLDB, strainKey, externalTypeKey, 
+          % (accKey, id, '', id, externalLDB, strainKey, externalTypeKey, 
 	     createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
