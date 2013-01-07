@@ -485,11 +485,28 @@ def processFile():
 
 	# if Allele found, resolve to Marker
 
-	if alleleKey > 0:
+	if alleleKey == 0:
+	    notUsed, cellLine = mutantNote.split('ES cell ')
+	    queryCritiera = '%' + queryCriteria + '%'
+	    querySQL = '''
+		select a._Allele_key, a._Marker_key
+		from ALL_Allele_CellLine aa, ALL_CellLine c, ALL_Allele a
+		where aa._MutantCellLine_key = c._CellLine_key
+		and c.cellLine = '%s'
+		and aa._Allele_key = a._Allele_key
+		and a.symbol like '%s'
+		''' % (cellLine, queryCriteria)
+	    results = db.sql(querySQL, 'auto')
+	    if len(results) == 1:
+		alleleKey = results[0]['_Allele_key']
+		markerKey = results[0]['_Marker_key']
+	    else
+		error = 1
+        else:
 	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 	    if len(results) > 0:
 		markerKey = results[0]['_Marker_key']
-
+  
         if strainExistKey > 0 or markerKey == 0 or strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
             # set error flag to true
             error = 1
