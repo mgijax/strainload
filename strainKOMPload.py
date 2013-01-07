@@ -486,7 +486,6 @@ def processFile():
 	# if Allele found, resolve to Marker
 
 	if alleleKey == 0:
-	    notUsed, cellLine = mutantNote.split('ES cell ')
 	    queryCritiera = '%' + queryCriteria + '%'
 	    querySQL = '''
 		select a._Allele_key, a._Marker_key
@@ -495,7 +494,7 @@ def processFile():
 		and c.cellLine = '%s'
 		and aa._Allele_key = a._Allele_key
 		and a.symbol like '%s'
-		''' % (cellLine, queryCriteria)
+		''' % (mutantNote, queryCriteria)
 	    results = db.sql(querySQL, 'auto')
 	    if len(results) == 1:
 		alleleKey = results[0]['_Allele_key']
