@@ -189,10 +189,9 @@ def init():
     db.set_sqlUser(user)
     db.set_sqlPasswordFromFile(passwordFileName)
  
-    fdate = mgi_utils.date('%m%d%Y')	# current date
     head, tail = os.path.split(inputFileName) 
-    diagFileName = tail + '.' + fdate + '.diagnostics'
-    errorFileName = tail + '.' + fdate + '.error'
+    diagFileName = tail + '.diagnostics'
+    errorFileName = tail + '.error'
 
     try:
         diagFile = open(diagFileName, 'w')
@@ -473,7 +472,6 @@ def processFile():
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
 	strainExistKey = verifyStrain(name, lineNum)
-	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
 	strainTypeKey = verifyStrainType(strainType, lineNum)
 	speciesKey = verifySpecies(species, lineNum)
 	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
@@ -485,8 +483,14 @@ def processFile():
 
 	# if Allele found, resolve to Marker
 
+	if len(alleleID) > 0:
+	    alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
+	else:
+	    alleleKey = 0
+	markerKey = 0
+
 	if alleleKey == 0:
-	    queryCritiera = '%' + queryCriteria + '%'
+	    queryCriteria = '%' + queryCriteria + '>'
 	    querySQL = '''
 		select a._Allele_key, a._Marker_key
 		from ALL_Allele_CellLine aa, ALL_CellLine c, ALL_Allele a
@@ -495,11 +499,12 @@ def processFile():
 		and aa._Allele_key = a._Allele_key
 		and a.symbol like '%s'
 		''' % (mutantNote, queryCriteria)
+	    print querySQL
 	    results = db.sql(querySQL, 'auto')
 	    if len(results) == 1:
 		alleleKey = results[0]['_Allele_key']
 		markerKey = results[0]['_Marker_key']
-	    else
+	    else:
 		error = 1
         else:
 	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
@@ -512,6 +517,7 @@ def processFile():
 
         # if errors, continue to next record
         if error:
+	    errorFile.write(querySQL)
             continue
 
         # if no errors, process
