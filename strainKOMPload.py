@@ -476,11 +476,6 @@ def processFile():
 	speciesKey = verifySpecies(species, lineNum)
 	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
 
-	if isStandard == 'y':
-		isStandard = '1'
-	else:
-		isStandard = '0'
-
 	# if Allele found, resolve to Marker
 
 	if len(alleleID) > 0:
