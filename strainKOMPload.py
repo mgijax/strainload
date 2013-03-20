@@ -545,11 +545,31 @@ def processFile():
         # Strain of Origin Note
 
 	# this stuff will convert the carriage returns coorectly
-        noteTokens = mutantNote.split('\\n')
-        newNotes = ''
-        for n in noteTokens:
-            newNotes = newNotes + n + chr(10)
-	mutantNote = newNotes
+        #noteTokens = mutantNote.split('\\n')
+        #newNotes = ''
+        #for n in noteTokens:
+        #    newNotes = newNotes + n + chr(10)
+	#mutantNote = newNotes
+
+        mgiNoteSeqNum = 1
+        if len(sooNote) > 0:
+
+            noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, strainKey, mgiNoteObjectKey, mgiStrainOriginTypeKey, \
+                   createdByKey, createdByKey, cdate, cdate))
+
+            while len(mutantNote) > 255:
+                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                    % (noteKey, mgiNoteSeqNum, sooNote[:255], createdByKey, createdByKey, cdate, cdate))
+                sooNote = sooNote[255:]
+                mgiNoteSeqNum = mgiNoteSeqNum + 1
+
+            if len(sooNote) > 0:
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                    % (noteKey, mgiNoteSeqNum, sooNote, createdByKey, createdByKey, cdate, cdate))
+
+            noteKey = noteKey + 1
 
         mgiNoteSeqNum = 1
         if len(mutantNote) > 0:
