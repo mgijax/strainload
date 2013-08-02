@@ -127,6 +127,7 @@ annotKey = 0
 noteKey = 0             # MGI_Note._Note_key
 
 isPrivate = 0
+isGeneticBackground = 0
 NULL = ''
 
 mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
@@ -517,8 +518,8 @@ def processFile():
 
         # if no errors, process
 
-        strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-            % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, 
+        strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+            % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, isGeneticBackground,
 	       createdByKey, createdByKey, cdate, cdate))
 
 	markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
