@@ -513,9 +513,10 @@ def processFile():
 	# this stuff will convert the carriage returns coorectly
         noteTokens = sooNote.split('\\n')
         newNotes = ''
-        for n in noteTokens:
-            newNotes = newNotes + n + chr(10)
-	sooNote = newNotes
+	if len(sooNote) > 0:
+        	for n in noteTokens:
+            		newNotes = newNotes + n + chr(10)
+		sooNote = newNotes
 
         mgiNoteSeqNum = 1
         if len(sooNote) > 0:
