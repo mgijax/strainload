@@ -495,7 +495,7 @@ def processFile():
 
         # MGI Accession ID for the strain
 
-	if isStandard == 1:
+	if isStandard == '1':
         	accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
           	% (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
 	     	   createdByKey, createdByKey, cdate, cdate))
