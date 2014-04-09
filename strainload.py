@@ -27,7 +27,7 @@
 #	A tab-delimited file in the format:
 #		field 1:  Strain id
 #		field 2:  Strain Name
-#		field 3:  MGI Allele ID
+#		field 3:  MGI Allele ID (pipe-delimited)
 #		field 4:  Strain Type (ex. 'coisogenic', 'congenic', 'conplastic')
 #		field 5:  Strain Species (ex. 'laboratory mouse')
 #		field 6:  Standard (1/0)
@@ -36,6 +36,7 @@
 #		field 9:  External MGI Type key
 #		field 10: Strain Attributes (xxxxx|xxxxx) (ex. 'chromosome aberration', 'closed colony')
 #		field 11: Created By
+#		field 12: Mutant ES Cell line of Origin note
 #
 # Outputs:
 #
@@ -57,6 +58,9 @@
 #	That no one else is adding records to the database.
 #
 # History
+#
+# lec	04/09/2014
+#	- TR11623/EMMA strains
 #
 # lec	03/26/2012
 #	- TR11015/Gensat
@@ -126,6 +130,7 @@ markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 mgiNoteObjectKey = 10   # MGI_Note._MGIType_key
 mgiNoteSeqNum = 1       # MGI_NoteChunk.sequenceNum
 mgiStrainOriginTypeKey = 1011   # MGI_Note._NoteType_key
+mgiMutantOriginTypeKey = 1038   # MGI_Note._NoteType_key
 
 qualifierKey = 615427	# nomenclature
 
@@ -450,7 +455,7 @@ def processFile():
 	    externalNumeric = ''
 	    #(externalPrefix, externalNumeric) = id.split(':')
 	    name = tokens[1]
-	    alleleID = tokens[2]
+	    alleleIDs = tokens[2]
 	    strainType = tokens[3]
 	    species = tokens[4]
 	    isStandard = tokens[5]
@@ -459,23 +464,16 @@ def processFile():
             externalTypeKey = tokens[8]
 	    annotations = tokens[9].split('|')
 	    createdBy = tokens[10]
+	    mutantNote = tokens[11]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
 	strainExistKey = verifyStrain(name, lineNum)
-	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
 	strainTypeKey = verifyStrainType(strainType, lineNum)
 	speciesKey = verifySpecies(species, lineNum)
 	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
 
-	# if Allele found, resolve to Marker
-
-	if alleleKey > 0:
-	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
-	    if len(results) > 0:
-		markerKey = results[0]['_Marker_key']
-
-        if strainExistKey > 0 or markerKey == 0 or strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
+        if strainExistKey > 0 or strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
             # set error flag to true
             error = 1
 
@@ -489,9 +487,19 @@ def processFile():
             % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, isGeneticBackground,
 	       createdByKey, createdByKey, cdate, cdate))
 
-	markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-	    % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
-	       createdByKey, createdByKey, cdate, cdate))
+	# if Allele found, resolve to Marker
+
+	allAlleles = alleleIDs.split('|')
+
+	for a in allAlleles:
+		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
+	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+		markerKey = results[0]['_Marker_key']
+
+		markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+	    		% (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
+	       		createdByKey, createdByKey, cdate, cdate))
+		strainmarkerKey = strainmarkerKey + 1
 
         # MGI Accession ID for the strain
 
@@ -541,6 +549,37 @@ def processFile():
 
             noteKey = noteKey + 1
 
+        # storing data in MGI_Note/MGI_NoteChunk
+        # Mutant Cell Line of Origin Note
+
+	# this stuff will convert the carriage returns coorectly
+        noteTokens = mutantNote.split('\\n')
+        newNotes = ''
+	if len(mutantNote) > 0:
+        	for n in noteTokens:
+            		newNotes = newNotes + n + chr(10)
+		mutantNote = newNotes
+
+        mgiNoteSeqNum = 1
+        if len(mutantNote) > 0:
+
+            noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, strainKey, mgiNoteObjectKey, mgiMutantOriginTypeKey, \
+                   createdByKey, createdByKey, cdate, cdate))
+
+            while len(mutantNote) > 255:
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                    % (noteKey, mgiNoteSeqNum, mutantNote[:255], createdByKey, createdByKey, cdate, cdate))
+                mutantNote = mutantNote[255:]
+                mgiNoteSeqNum = mgiNoteSeqNum + 1
+
+            if len(mutantNote) > 0:
+                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                    % (noteKey, mgiNoteSeqNum, mutantNote, createdByKey, createdByKey, cdate, cdate))
+
+            noteKey = noteKey + 1
+
 	#
         # Annotations
         #
@@ -566,7 +605,6 @@ def processFile():
 
         mgiKey = mgiKey + 1
         strainKey = strainKey + 1
-	strainmarkerKey = strainmarkerKey + 1
 
     #	end of "for line in inputFile.readlines():"
 
