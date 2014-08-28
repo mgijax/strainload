@@ -1,3 +1,10 @@
+TAG: strainload-5-1-9-1
+DATE: 08/28/2014
+STAFF: sc
+CHANGES: TR11775
+1) strainload.py - update strain type query to use _Vocab_key 55
+2) strainKOMPload.py - ditto
+
 TAG: strainload-5-1-8-1
 DATE: 04/09/2014
 STAFF: lec

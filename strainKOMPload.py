@@ -316,7 +316,7 @@ def verifyStrainType(
     global strainTypesDict
 
     if len(strainTypesDict) == 0:
-        results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 27', 'auto')
+        results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 55', 'auto')
 
         for r in results:
 	    strainTypesDict[r['term']] = r['_Term_key']
