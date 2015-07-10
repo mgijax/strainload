@@ -403,17 +403,17 @@ def bcpFiles():
     noteFile.close()
     noteChunkFile.close()
 
-    bcp1 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp1 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), strainTable, strainFileName, )
-    bcp2 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp2 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), markerTable, markerFileName, )
-    bcp3 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp3 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), accTable, accFileName, )
-    bcp4 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp4 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), annotTable, annotFileName, )
-    bcp5 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp5 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteTable, noteFileName, )
-    bcp6 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+    bcp6 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
                      % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteChunkTable, noteChunkFileName, )
 
     for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
