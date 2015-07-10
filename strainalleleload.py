@@ -249,7 +249,7 @@ def setPrimaryKeys():
 
     global strainalleleKey
 
-    results = db.sql('select maxKey = max(_StrainMarker_key) + 1 from PRB_Strain_Marker', 'auto')
+    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
     strainalleleKey = results[0]['maxKey']
 
 def bcpFiles():

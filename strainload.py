@@ -338,7 +338,7 @@ def verifyStrain(
 
     global strainDict
 
-    results = db.sql('select _Strain_key, strain from PRB_Strain where strain = "%s"' % (strain), 'auto')
+    results = db.sql('select _Strain_key, strain from PRB_Strain where strain = \'%s\'' % (strain), 'auto')
 
     for r in results:
         strainDict[r['strain']] = r['_Strain_key']
@@ -362,23 +362,23 @@ def setPrimaryKeys():
 
     global strainKey, strainmarkerKey, accKey, mgiKey, annotKey, noteKey
 
-    results = db.sql('select maxKey = max(_Strain_key) + 1 from PRB_Strain', 'auto')
+    results = db.sql('select max(_Strain_key) + 1 as maxKey from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_StrainMarker_key) + 1 from PRB_Strain_Marker', 'auto')
+    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
     strainmarkerKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Accession_key) + 1 from ACC_Accession', 'auto')
+    results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
     accKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = maxNumericPart + 1 from ACC_AccessionMax ' + \
-        'where prefixPart = "%s"' % (mgiPrefix), 'auto')
+    results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax ' + \
+        'where prefixPart = \'%s\'' % (mgiPrefix), 'auto')
     mgiKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Annot_key) + 1 from VOC_Annot', 'auto')
+    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
     annotKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Note_key) + 1 from MGI_Note', 'auto')
+    results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     noteKey = results[0]['maxKey']
 
 # Purpose:  BCPs the data into the database
