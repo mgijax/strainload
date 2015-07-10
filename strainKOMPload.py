@@ -616,7 +616,7 @@ def processFile():
     #
 
     if not DEBUG:
-        db.sql('select * ACC_setMax (%d);' % (lineNum), None)
+        db.sql('select * from ACC_setMax (%d);' % (lineNum), None)
 
 #
 # Main
