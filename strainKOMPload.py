@@ -395,8 +395,6 @@ def setPrimaryKeys():
 
 def bcpFiles():
 
-    bcpdelim = "|"
-
     if DEBUG or not bcpon:
         return
 
@@ -407,30 +405,22 @@ def bcpFiles():
     noteFile.close()
     noteChunkFile.close()
 
-    bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
-    bcpII = '-c -t\"|" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
-    truncateDB = 'dump transaction %s with truncate_only' % (db.get_sqlDatabase())
+    bcp1 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), strainTable, strainFileName, )
+    bcp2 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), markerTable, markerFileName, )
+    bcp3 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), accTable, accFileName, )
+    bcp4 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), annotTable, annotFileName, )
+    bcp5 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteTable, noteFileName, )
+    bcp6 = 'psql -a -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
+                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteChunkTable, noteChunkFileName, )
 
-    bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
-    bcp2 = '%s%s in %s %s' % (bcpI, markerTable, markerFileName, bcpII)
-    bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
-    bcp4 = '%s%s in %s %s' % (bcpI, annotTable, annotFileName, bcpII)
-    bcp5 = '%s%s in %s %s' % (bcpI, noteTable, noteFileName, bcpII)
-
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5]:
+    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
 	diagFile.write('%s\n' % bcpCmd)
 	os.system(bcpCmd)
-	db.sql(truncateDB, None)
-
-    #
-    # for MGI_NoteChunk use -t, -r to set field and line numbers
-    # so that "\n" can exist in the "note" itself
-    #
-    bcpII = '-c -t\"&=&" -r"#=#\n" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
-    bcp6 = '%s%s in %s %s' % (bcpI, noteChunkTable, noteChunkFileName, bcpII)
-    diagFile.write('%s\n' % bcp6)
-    os.system(bcp6)
-    db.sql(truncateDB, None)
 
     return
 
@@ -560,14 +550,15 @@ def processFile():
                    createdByKey, createdByKey, cdate, cdate))
 
             while len(mutantNote) > 255:
-                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
                     % (noteKey, mgiNoteSeqNum, sooNote[:255], createdByKey, createdByKey, cdate, cdate))
                 sooNote = sooNote[255:]
                 mgiNoteSeqNum = mgiNoteSeqNum + 1
 
             if len(sooNote) > 0:
-                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
                     % (noteKey, mgiNoteSeqNum, sooNote, createdByKey, createdByKey, cdate, cdate))
 
             noteKey = noteKey + 1
@@ -580,15 +571,15 @@ def processFile():
                    createdByKey, createdByKey, cdate, cdate))
 
             while len(mutantNote) > 255:
-                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
                     % (noteKey, mgiNoteSeqNum, mutantNote[:255], createdByKey, createdByKey, cdate, cdate))
                 mutantNote = mutantNote[255:]
                 mgiNoteSeqNum = mgiNoteSeqNum + 1
 
             if len(mutantNote) > 0:
-                #noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
+                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
                     % (noteKey, mgiNoteSeqNum, mutantNote, createdByKey, createdByKey, cdate, cdate))
 
             noteKey = noteKey + 1
