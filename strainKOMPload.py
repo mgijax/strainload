@@ -385,43 +385,6 @@ def setPrimaryKeys():
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     noteKey = results[0]['maxKey']
 
-# Purpose:  BCPs the data into the database
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  BCPs the data into the database
-# Throws:   nothing
-
-def bcpFiles():
-
-    if DEBUG or not bcpon:
-        return
-
-    strainFile.close()
-    markerFile.close()
-    accFile.close()
-    annotFile.close()
-    noteFile.close()
-    noteChunkFile.close()
-
-    bcp1 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), strainTable, strainFileName, )
-    bcp2 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), markerTable, markerFileName, )
-    bcp3 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), accTable, accFileName, )
-    bcp4 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), annotTable, annotFileName, )
-    bcp5 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteTable, noteFileName, )
-    bcp6 = 'psql -h%s -d%s -U%s --command "\copy mgd.%s from \'%s\' with null as \'\' delimiter as E\'|\';"' \
-                     % (db.get_sqlServer(), db.get_sqlDatabase(), db.get_sqlUser(), noteChunkTable, noteChunkFileName, )
-
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
-	diagFile.write('%s\n' % bcpCmd)
-	os.system(bcpCmd)
-
-    return
-
 # Purpose:  processes data
 # Returns:  nothing
 # Assumes:  nothing
@@ -617,6 +580,7 @@ def processFile():
 
     if not DEBUG:
         db.sql('select * from ACC_setMax (%d);' % (lineNum), None)
+    	db.commit()
 
 #
 # Main
@@ -626,6 +590,5 @@ init()
 verifyMode()
 setPrimaryKeys()
 processFile()
-bcpFiles()
 exit(0)
 

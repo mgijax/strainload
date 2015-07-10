@@ -1,3 +1,11 @@
+TAG: strainload-5-2-2-?
+DATE: 07/10/2015
+STAFF: lec
+CHANGES: TR11750
+1) strainKOMPload.py
+updated for Postgres; strainload.py & strainallelelload.py will also need to
+be done, when they are needed
+
 TAG: strainload-5-1-9-1
 DATE: 08/28/2014
 STAFF: sc
