@@ -420,7 +420,7 @@ def bcpFiles():
 
     for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
 	diagFile.write('%s\n' % bcpCmd)
-	os.system(bcpCmd)
+	#os.system(bcpCmd)
 
     return
 
