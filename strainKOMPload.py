@@ -131,7 +131,6 @@ isGeneticBackground = 0
 NULL = ''
 
 mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
-mgiPrefix = "MGI:"
 alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
 markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 mgiNoteObjectKey = 10   # MGI_Note._MGIType_key
@@ -243,7 +242,7 @@ def init():
     db.set_sqlLogFunction(db.sqlLogAll)
 
     # Set Log File Descriptor
-    db.set_sqlLogFD(diagFile)
+    #db.set_sqlLogFD(diagFile)
 
     diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
     diagFile.write('Server: %s\n' % (db.get_sqlServer()))
@@ -377,8 +376,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
     accKey = results[0]['maxKey']
 
-    results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax ' + \
-        'where prefixPart = "%s"' % (mgiPrefix), 'auto')
+    results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax where prefixPart = \'MGI:\'', 'auto')
     mgiKey = results[0]['maxKey']
 
     results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
@@ -518,8 +516,8 @@ def processFile():
 
         # MGI Accession ID for the strain
 
-        accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
-          % (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
+        accFile.write('%d|MGI:%d|MGI:|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
+          % (accKey, mgiKey, mgiKey, strainKey, mgiTypeKey, 
 	     createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
