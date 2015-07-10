@@ -418,7 +418,7 @@ def bcpFiles():
 
     for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5, bcp6]:
 	diagFile.write('%s\n' % bcpCmd)
-	#os.system(bcpCmd)
+	os.system(bcpCmd)
 
     return
 
@@ -616,7 +616,7 @@ def processFile():
     #
 
     if not DEBUG:
-        db.sql('exec ACC_setMax %d' % (lineNum), None)
+        db.sql('select * ACC_setMax (%d);' % (lineNum), None)
 
 #
 # Main
