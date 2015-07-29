@@ -69,8 +69,6 @@ DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
 CRT = '\n'		# carriage return/newline
 
-bcpon = 1		# can the bcp files be bcp-ed into the database?  default is yes.
-
 diagFile = ''		# diagnostic file descriptor
 errorFile = ''		# error file descriptor
 inputFile = ''		# file descriptor
@@ -193,7 +191,6 @@ def verifyMode():
 
     if mode == 'preview':
         DEBUG = 1
-        bcpon = 0
     elif mode != 'load':
         exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
@@ -251,34 +248,6 @@ def setPrimaryKeys():
 
     results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
     strainalleleKey = results[0]['maxKey']
-
-def bcpFiles():
-        # requires:
-        #
-        # effects:
-        #       BCPs the data into the database
-        #
-        # returns:
-        #       nothing
-        #
-
-    bcpdelim = "|"
-
-    if DEBUG or not bcpon:
-        return
-
-    strainFile.close()
-
-    bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
-    bcpII = '-c -t\"|" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
-
-    bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
-
-    for bcpCmd in [bcp1]:
-	diagFile.write('%s\n' % bcpCmd)
-	os.system(bcpCmd)
-
-    return
 
 def processFile():
         # requires:
@@ -380,6 +349,5 @@ verifyMode()
 setPrimaryKeys()
 loadDictionaries()
 processFile()
-bcpFiles()
 exit(0)
 

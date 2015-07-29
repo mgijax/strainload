@@ -83,8 +83,6 @@ DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
 CRT = '\n'		# carriage return/newline
 
-bcpon = 1		# can the bcp files be bcp-ed into the database?  default is yes.
-
 diagFile = ''		# diagnostic file descriptor
 errorFile = ''		# error file descriptor
 inputFile = ''		# file descriptor
@@ -260,7 +258,6 @@ def verifyMode():
 
     if mode == 'preview':
         DEBUG = 1
-        bcpon = 0
     elif mode != 'load':
         exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
@@ -380,53 +377,6 @@ def setPrimaryKeys():
 
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
     noteKey = results[0]['maxKey']
-
-# Purpose:  BCPs the data into the database
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  BCPs the data into the database
-# Throws:   nothing
-
-def bcpFiles():
-
-    bcpdelim = "|"
-
-    if DEBUG or not bcpon:
-        return
-
-    strainFile.close()
-    markerFile.close()
-    accFile.close()
-    annotFile.close()
-    noteFile.close()
-    noteChunkFile.close()
-
-    bcpI = 'cat %s | bcp %s..' % (passwordFileName, db.get_sqlDatabase())
-    bcpII = '-c -t\"|" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
-    truncateDB = 'dump transaction %s with truncate_only' % (db.get_sqlDatabase())
-
-    bcp1 = '%s%s in %s %s' % (bcpI, strainTable, strainFileName, bcpII)
-    bcp2 = '%s%s in %s %s' % (bcpI, markerTable, markerFileName, bcpII)
-    bcp3 = '%s%s in %s %s' % (bcpI, accTable, accFileName, bcpII)
-    bcp4 = '%s%s in %s %s' % (bcpI, annotTable, annotFileName, bcpII)
-    bcp5 = '%s%s in %s %s' % (bcpI, noteTable, noteFileName, bcpII)
-
-    for bcpCmd in [bcp1, bcp2, bcp3, bcp4, bcp5]:
-	diagFile.write('%s\n' % bcpCmd)
-	os.system(bcpCmd)
-	db.sql(truncateDB, None)
-
-    #
-    # for MGI_NoteChunk use -t, -r to set field and line numbers
-    # so that "\n" can exist in the "note" itself
-    #
-    bcpII = '-c -t\"&=&" -r"#=#\n" -S%s -U%s' % (db.get_sqlServer(), db.get_sqlUser())
-    bcp6 = '%s%s in %s %s' % (bcpI, noteChunkTable, noteChunkFileName, bcpII)
-    diagFile.write('%s\n' % bcp6)
-    os.system(bcp6)
-    db.sql(truncateDB, None)
-
-    return
 
 # Purpose:  processes data
 # Returns:  nothing
@@ -623,6 +573,5 @@ init()
 verifyMode()
 setPrimaryKeys()
 processFile()
-bcpFiles()
 exit(0)
 
