@@ -134,7 +134,6 @@ mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
 alleleTypeKey = 11	# ACC_MGIType._MGIType_key for Allele
 markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 mgiNoteObjectKey = 10   # MGI_Note._MGIType_key
-mgiNoteSeqNum = 1       # MGI_NoteChunk.sequenceNum
 mgiStrainOriginTypeKey = 1011   # MGI_Note._NoteType_key
 mgiMutantOriginTypeKey = 1038   # MGI_Note._NoteType_key
 
@@ -503,45 +502,25 @@ def processFile():
         #    newNotes = newNotes + n + chr(10)
 	#mutantNote = newNotes
 
-        mgiNoteSeqNum = 1
         if len(sooNote) > 0:
 
             noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
                 % (noteKey, strainKey, mgiNoteObjectKey, mgiStrainOriginTypeKey, \
                    createdByKey, createdByKey, cdate, cdate))
 
-            while len(mutantNote) > 255:
-                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                    % (noteKey, mgiNoteSeqNum, sooNote[:255], createdByKey, createdByKey, cdate, cdate))
-                sooNote = sooNote[255:]
-                mgiNoteSeqNum = mgiNoteSeqNum + 1
-
-            if len(sooNote) > 0:
-                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                    % (noteKey, mgiNoteSeqNum, sooNote, createdByKey, createdByKey, cdate, cdate))
+            noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, 1, sooNote, createdByKey, createdByKey, cdate, cdate))
 
             noteKey = noteKey + 1
 
-        mgiNoteSeqNum = 1
         if len(mutantNote) > 0:
 
             noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
                 % (noteKey, strainKey, mgiNoteObjectKey, mgiMutantOriginTypeKey, \
                    createdByKey, createdByKey, cdate, cdate))
 
-            while len(mutantNote) > 255:
-                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                    % (noteKey, mgiNoteSeqNum, mutantNote[:255], createdByKey, createdByKey, cdate, cdate))
-                mutantNote = mutantNote[255:]
-                mgiNoteSeqNum = mgiNoteSeqNum + 1
-
-            if len(mutantNote) > 0:
-                #noteChunkFile.write('%s&=&%s&=&%s&=&%s&=&%s&=&%s&=&%s#=#\n' \
-                noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-                    % (noteKey, mgiNoteSeqNum, mutantNote, createdByKey, createdByKey, cdate, cdate))
+            noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, 1, mutantNote, createdByKey, createdByKey, cdate, cdate))
 
             noteKey = noteKey + 1
 
