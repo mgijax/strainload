@@ -72,6 +72,9 @@ import db
 import mgi_utils
 import loadlib
 
+db.setAutoTranslate(False)
+db.setAutoTranslateBE(False)
+
 #globals
 
 user = os.environ['MGD_DBUSER']
@@ -366,8 +369,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
     accKey = results[0]['maxKey']
 
-    results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax ' + \
-        'where prefixPart = \'%s\'' % (mgiPrefix), 'auto')
+    results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax where prefixPart = \'%s\'' % (mgiPrefix), 'auto')
     mgiKey = results[0]['maxKey']
 
     results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
