@@ -72,9 +72,6 @@ import db
 import mgi_utils
 import loadlib
 
-db.setAutoTranslate(False)
-db.setAutoTranslateBE(False)
-
 #globals
 
 user = os.environ['MGD_DBUSER']
