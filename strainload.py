@@ -360,7 +360,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Strain_key) + 1 as maxKey from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
 
-    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
+    results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
     strainmarkerKey = results[0]['maxKey']
 
     results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
@@ -543,6 +543,10 @@ def processFile():
 
     if not DEBUG:
         db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
+
+        # update prb_strain_marker_seq auto-sequence
+        db.sql('''select setval('prb_strain_marker_seq')''', None)
+        db.commit()
 
 #
 # Main

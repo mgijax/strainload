@@ -246,7 +246,7 @@ def setPrimaryKeys():
 
     global strainalleleKey
 
-    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
+    results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
     strainalleleKey = results[0]['maxKey']
 
 def processFile():
@@ -339,6 +339,18 @@ def processFile():
         strainalleleKey = strainalleleKey + 1
 
     #	end of "for line in inputFile.readlines():"
+
+    #
+    # Update the AccessionMax value
+    #
+
+    if not DEBUG:
+        db.sql('select * from ACC_setMax (%d);' % (lineNum), None)
+    	db.commit()
+
+        # update prb_strain_marker_seq auto-sequence
+        db.sql('''select setval('prb_strain_marker_seq')''', None)
+        db.commit()
 
 #
 # Main
