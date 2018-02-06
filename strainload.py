@@ -232,9 +232,6 @@ def init():
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
 
-    # Set Log File Descriptor
-    db.set_sqlLogFD(diagFile)
-
     diagFile.write('Start Date/Time: %s\n' % (mgi_utils.date()))
     diagFile.write('Server: %s\n' % (db.get_sqlServer()))
     diagFile.write('Database: %s\n' % (db.get_sqlDatabase()))
@@ -545,7 +542,7 @@ def processFile():
         db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
 
         # update prb_strain_marker_seq auto-sequence
-        db.sql('''select setval('prb_strain_marker_seq')''', None)
+	db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) + 1 from PRB_Strain_Marker)) ''', None)
         db.commit()
 
 #
