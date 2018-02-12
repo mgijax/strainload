@@ -542,7 +542,7 @@ def processFile():
         db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
 
         # update prb_strain_marker_seq auto-sequence
-	db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) + 1 from PRB_Strain_Marker)) ''', None)
+	db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
         db.commit()
 
 #
