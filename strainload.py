@@ -357,7 +357,8 @@ def setPrimaryKeys():
     results = db.sql('select max(_Strain_key) + 1 as maxKey from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
 
-    results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
+    #results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
+    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
     strainmarkerKey = results[0]['maxKey']
 
     results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
@@ -433,9 +434,9 @@ def processFile():
 
 	# if Allele found, resolve to Marker
 
-	allAlleles = alleleIDs.split('|')
-
-	for a in allAlleles:
+	if len(alleleIDs) > 0:
+	    allAlleles = alleleIDs.split('|')
+	    for a in allAlleles:
 		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
 	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 		markerKey = results[0]['_Marker_key']
@@ -464,14 +465,6 @@ def processFile():
         # storing data in MGI_Note/MGI_NoteChunk
         # Strain of Origin Note
 
-	# this stuff will convert the carriage returns coorectly
-        noteTokens = sooNote.split('\\n')
-        newNotes = ''
-	if len(sooNote) > 0:
-        	for n in noteTokens:
-            		newNotes = newNotes + n + chr(10)
-		sooNote = newNotes
-
         if len(sooNote) > 0:
 
             noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
@@ -485,14 +478,6 @@ def processFile():
 
         # storing data in MGI_Note/MGI_NoteChunk
         # Mutant Cell Line of Origin Note
-
-	# this stuff will convert the carriage returns coorectly
-        noteTokens = mutantNote.split('\\n')
-        newNotes = ''
-	if len(mutantNote) > 0:
-        	for n in noteTokens:
-            		newNotes = newNotes + n + chr(10)
-		mutantNote = newNotes
 
         if len(mutantNote) > 0:
 
@@ -513,21 +498,22 @@ def processFile():
 	# _Qualifier_ke = 1614158
 	#
 
-	for a in annotations:
+	if len(annotations) > 0:
+	    for a in annotations:
 
-	    # strain annotation type
-	    annotTypeKey = 1009
+	        # strain annotation type
+	        annotTypeKey = 1009
 
-	    # this is a null qualifier key
-	    annotQualifierKey = 1614158
+	        # this is a null qualifier key
+	        annotQualifierKey = 1614158
 
-	    annotTermKey = loadlib.verifyTerm('', 27, a, lineNum, errorFile)
-	    if annotTermKey == 0:
-		continue
-
-            annotFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
-              % (annotKey, annotTypeKey, strainKey, annotTermKey, annotQualifierKey, cdate, cdate))
-            annotKey = annotKey + 1
+	        annotTermKey = loadlib.verifyTerm('', 27, a, lineNum, errorFile)
+	        if annotTermKey == 0:
+		    continue
+    
+                annotFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                  % (annotKey, annotTypeKey, strainKey, annotTermKey, annotQualifierKey, cdate, cdate))
+                annotKey = annotKey + 1
 
         mgiKey = mgiKey + 1
         strainKey = strainKey + 1
@@ -542,8 +528,8 @@ def processFile():
         db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
 
         # update prb_strain_marker_seq auto-sequence
-	db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
-        db.commit()
+	#db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
+        #db.commit()
 
 #
 # Main
