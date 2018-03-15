@@ -446,12 +446,11 @@ def processFile():
 	       		createdByKey, createdByKey, cdate, cdate))
 		strainmarkerKey = strainmarkerKey + 1
 
-        # MGI Accession ID for the strain
+        # MGI Accession ID for all strain
 
-	if isStandard == '1':
-        	accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
-          	% (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
-	     	   createdByKey, createdByKey, cdate, cdate))
+        accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
+        	% (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
+		createdByKey, createdByKey, cdate, cdate))
         	accKey = accKey + 1
 
         # external accession id
