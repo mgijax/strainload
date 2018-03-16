@@ -6,7 +6,6 @@
 
 source ${STRAINLOAD}/Configuration
 
-setenv STRAINMODE		load
 setenv STRAINDATADIR		?
 setenv STRAININPUTFILE		${STRAINDATADIR}/input/?
 setenv STRAINLOG		${STRAINDATADIR}/logs/?

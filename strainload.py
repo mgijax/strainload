@@ -79,7 +79,6 @@ passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['STRAINMODE']
 inputFileName = os.environ['STRAININPUTFILE']
 
-DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
 CRT = '\n'		# carriage return/newline
 
@@ -239,23 +238,6 @@ def init():
     errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
     return
-
-# Purpose: verify processing mode
-# Returns: nothing
-# Assumes: nothing
-# Effects: if the processing mode is not valid, exits.
-#	   else, sets global variables
-# Throws:  nothing
-
-def verifyMode():
-
-    global DEBUG
-
-    if mode == 'preview':
-        DEBUG = 1
-    elif mode != 'load':
-        exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
-
 
 # Purpose:  verify Species
 # Returns:  Species Key if Species is valid, else 0
@@ -523,19 +505,17 @@ def processFile():
     # Update the AccessionMax value
     #
 
-    if not DEBUG:
-        db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
+    db.sql('select * from ACC_setMax (%d)' % (lineNum * 2), None)
 
-        # update prb_strain_marker_seq auto-sequence
-	#db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
-        #db.commit()
+    # update prb_strain_marker_seq auto-sequence
+    #db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
+    #db.commit()
 
 #
 # Main
 #
 
 init()
-verifyMode()
 setPrimaryKeys()
 processFile()
 exit(0)

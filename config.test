@@ -1,0 +1,12 @@
+#!/bin/csh -f
+
+#
+# default configuration file
+#
+
+source ${STRAINLOAD}/Configuration
+
+setenv STRAINDATADIR		/data/loads/lec/mgi/strainload
+setenv STRAININPUTFILE		${STRAINDATADIR}/input/strain.test
+setenv STRAINLOG		${STRAINDATADIR}/logs/strain.logs
+
