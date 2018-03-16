@@ -76,7 +76,6 @@ import loadlib
 
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
-mode = os.environ['STRAINMODE']
 inputFileName = os.environ['STRAININPUTFILE']
 
 TAB = '\t'		# tab
@@ -505,11 +504,12 @@ def processFile():
     # Update the AccessionMax value
     #
 
-    db.sql('select * from ACC_setMax (%d)' % (lineNum * 2), None)
+    db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
 
     # update prb_strain_marker_seq auto-sequence
     #db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
-    #db.commit()
+
+    db.commit()
 
 #
 # Main
