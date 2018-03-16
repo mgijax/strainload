@@ -24,5 +24,8 @@ ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} VOC_Annot . VOC_Annot.
 ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} MGI_Note . MGI_Note.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
 ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} MGI_NoteChunk . MGI_NoteChunk.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
 
+${ALLCACHELOAD}/allstrain.csh | tee -a ${STRAINLOG}
+${PG_MGD_DBSCHEMADIR}/test/findmgi.csh  | tee -a ${STRAINLOG}
+
 date >>& ${STRAINLOG}
 
