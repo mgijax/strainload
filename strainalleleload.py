@@ -65,7 +65,6 @@ passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 mode = os.environ['STRAINMODE']
 inputFileName = os.environ['STRAININPUTFILE']
 
-DEBUG = 0		# if 0, not in debug mode
 TAB = '\t'		# tab
 CRT = '\n'		# carriage return/newline
 
@@ -173,26 +172,6 @@ def init():
     errorFile.write('Start Date/Time: %s\n\n' % (mgi_utils.date()))
 
     return
-
-def verifyMode():
-        # requires:
-        #
-        # effects:
-        #       Verifies the processing mode is valid.  If it is not valid,
-        #       the program is aborted.
-        #       Sets globals based on processing mode.
-        #       Deletes data based on processing mode.
-        #
-        # returns:
-        #       nothing
-        #
-
-    global DEBUG
-
-    if mode == 'preview':
-        DEBUG = 1
-    elif mode != 'load':
-        exit(1, 'Invalid Processing Mode:  %s\n' % (mode))
 
 def verifyQualifier(qualifier, lineNum):
         # requires:
@@ -356,7 +335,6 @@ def processFile():
 #
 
 init()
-verifyMode()
 setPrimaryKeys()
 loadDictionaries()
 processFile()
