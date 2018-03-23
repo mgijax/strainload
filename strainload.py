@@ -388,7 +388,7 @@ def processFile():
 	    sooNote = tokens[6]
 	    externalLDB = tokens[7]
             externalTypeKey = tokens[8]
-	    annotations = tokens[9].split('|')
+	    annotations = tokens[9]
 	    createdBy = tokens[10]
 	    mutantNote = tokens[11]
         except:
@@ -419,6 +419,8 @@ def processFile():
 	    allAlleles = alleleIDs.split('|')
 	    for a in allAlleles:
 		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
+		if alleleKey == 0:
+		    continue
 	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 		markerKey = results[0]['_Marker_key']
 
@@ -479,6 +481,7 @@ def processFile():
 	#
 
 	if len(annotations) > 0:
+	    annotations = annotations.split('|')
 	    for a in annotations:
 
 	        # strain annotation type

@@ -15,6 +15,8 @@ touch ${STRAINLOG}
 
 date >& ${STRAINLOG}
 
+rm -rf *.bcp
+
 ${STRAINLOAD}/strainload.py >>& ${STRAINLOG}
 
 ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} PRB_Strain . PRB_Strain.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
