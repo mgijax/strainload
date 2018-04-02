@@ -37,6 +37,8 @@
 #		field 10: Strain Attributes (xxxxx|xxxxx) (ex. 'chromosome aberration', 'closed colony')
 #		field 11: Created By
 #		field 12: Mutant ES Cell line of Origin note
+#		to add : field 13: Private (1/0)
+#	        to add : field 14: IMPC Colony Note
 #
 # Outputs:
 #
@@ -338,8 +340,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Strain_key) + 1 as maxKey from PRB_Strain', 'auto')
     strainKey = results[0]['maxKey']
 
-    #results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
-    results = db.sql('select max(_StrainMarker_key) + 1 as maxKey from PRB_Strain_Marker', 'auto')
+    results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
     strainmarkerKey = results[0]['maxKey']
 
     results = db.sql('select max(_Accession_key) + 1 as maxKey from ACC_Accession', 'auto')
@@ -511,8 +512,8 @@ def processFile():
     db.commit()
 
     # update prb_strain_marker_seq auto-sequence
-    #db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
-    #db.commit()
+    db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
+    db.commit()
 
 #
 # Main
