@@ -37,8 +37,8 @@
 #		field 10: Strain Attributes (xxxxx|xxxxx) (ex. 'chromosome aberration', 'closed colony')
 #		field 11: Created By
 #		field 12: Mutant ES Cell line of Origin note
-#		to add : field 13: Private (1/0)
-#	        to add : field 14: IMPC Colony Note
+#		field 13: Private (1/0)
+#	        field 14: IMPC Colony Note
 #
 # Outputs:
 #
@@ -117,7 +117,6 @@ mgiKey = 0              # ACC_AccessionMax.maxNumericPart
 annotKey = 0
 noteKey = 0             # MGI_Note._Note_key
 
-isPrivate = 0
 isGeneticBackground = 0
 
 mgiTypeKey = 10		# ACC_MGIType._MGIType_key for Strains
@@ -127,6 +126,7 @@ markerTypeKey = 2       # ACC_MGIType._MGIType_key for Marker
 mgiNoteObjectKey = 10   # MGI_Note._MGIType_key
 mgiStrainOriginTypeKey = 1011   # MGI_Note._NoteType_key
 mgiMutantOriginTypeKey = 1038   # MGI_Note._NoteType_key
+mgiIMPCColonyTypeKey = 1012	# MGI_Note._NoteType_key
 
 qualifierKey = 615427	# nomenclature
 
@@ -349,7 +349,7 @@ def setPrimaryKeys():
     results = db.sql('select maxNumericPart + 1 as maxKey from ACC_AccessionMax where prefixPart = \'%s\'' % (mgiPrefix), 'auto')
     mgiKey = results[0]['maxKey']
 
-    results = db.sql('select max(_Annot_key) + 1 as maxKey from VOC_Annot', 'auto')
+    results = db.sql(''' select nextval('voc_annot_seq') as maxKey ''', 'auto')
     annotKey = results[0]['maxKey']
 
     results = db.sql('select max(_Note_key) + 1 as maxKey from MGI_Note', 'auto')
@@ -392,6 +392,8 @@ def processFile():
 	    annotations = tokens[9]
 	    createdBy = tokens[10]
 	    mutantNote = tokens[11]
+	    isPrivate = tokens[12]
+	    impcColonyNote = tokens[13]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
@@ -474,6 +476,20 @@ def processFile():
 
             noteKey = noteKey + 1
 
+        # storing data in MGI_Note/MGI_NoteChunk
+        # IMPC Colony Note
+
+        if len(impcColonyNote) > 0:
+
+            noteFile.write('%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, strainKey, mgiNoteObjectKey, mgiIMPCColonyTypeKey, \
+                   createdByKey, createdByKey, cdate, cdate))
+
+            noteChunkFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
+                % (noteKey, 1, sooNote, createdByKey, createdByKey, cdate, cdate))
+
+            noteKey = noteKey + 1
+
 	#
         # Annotations
         #
@@ -513,6 +529,10 @@ def processFile():
 
     # update prb_strain_marker_seq auto-sequence
     db.sql(''' select setval('prb_strain_marker_seq', (select max(_StrainMarker_key) from PRB_Strain_Marker)) ''', None)
+    db.commit()
+
+    # update voc_annot_seq auto-sequence
+    db.sql(''' select setval('voc_annot_seq', (select max(_Annot_key) from VOC_Annot)) ''', None)
     db.commit()
 
 #
