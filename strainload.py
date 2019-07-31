@@ -76,6 +76,8 @@ import loadlib
 
 #globals
 
+db.setTrace()
+
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 inputFileName = os.environ['STRAININPUTFILE']
@@ -520,10 +522,7 @@ def processFile():
 
     #	end of "for line in inputFile.readlines():"
 
-    #
-    # Update the AccessionMax value
-    #
-
+    # update the AccessionMax value
     db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
     db.commit()
 
