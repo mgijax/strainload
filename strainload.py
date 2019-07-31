@@ -81,6 +81,7 @@ db.setTrace()
 user = os.environ['MGD_DBUSER']
 passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 inputFileName = os.environ['STRAININPUTFILE']
+lineNum = 0
 
 TAB = '\t'		# tab
 CRT = '\n'		# carriage return/newline
@@ -365,9 +366,9 @@ def setPrimaryKeys():
 
 def processFile():
 
+    global lineNum
     global strainKey, strainmarkerKey, accKey, mgiKey, annotKey, noteKey
 
-    lineNum = 0
     # For each line in the input file
 
     for line in inputFile.readlines():
@@ -522,6 +523,61 @@ def processFile():
 
     #	end of "for line in inputFile.readlines():"
 
+def bcpFiles():
+    '''
+    # requires:
+    #
+    # effects:
+    #	BCPs the data into the database
+    #
+    # returns:
+    #	nothing
+    #
+    '''
+
+    db.commit()
+    strainFile.flush()
+    markerFile.flush()
+    accFile.flush()
+    annotFile.flush()
+    noteFile.flush()
+    noteChunkFile.flush()
+
+    bcpCommand = os.environ['PG_DBUTILS'] + '/bin/bcpin.csh'
+    currentDir = os.getcwd()
+
+    bcp1 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+	(bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'PRB_Strain', currentDir, strainFileName)
+
+    bcp2 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'PRB_Strain_Marker', currentDir, markerFileName)
+
+    bcp3 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'ACC_Accession', currentDir, accFileName)
+
+    bcp4 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'VOC_Annot', currentDir, annotFileName)
+
+    bcp5 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'MGI_Note', currentDir, noteFileName)
+
+    bcp6 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'MGI_NoteChunk', currentDir, noteChunkFileName)
+
+    diagFile.write('%s\n' % bcp1)
+    diagFile.write('%s\n' % bcp2)
+    diagFile.write('%s\n' % bcp3)
+    diagFile.write('%s\n' % bcp4)
+    diagFile.write('%s\n' % bcp5)
+    diagFile.write('%s\n' % bcp6)
+
+    os.system(bcp1)
+    os.system(bcp2)
+    os.system(bcp3)
+    os.system(bcp4)
+    os.system(bcp5)
+    os.system(bcp6)
+
     # update the AccessionMax value
     db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
     db.commit()
@@ -541,5 +597,6 @@ def processFile():
 init()
 setPrimaryKeys()
 processFile()
+bcpFiles()
 exit(0)
 

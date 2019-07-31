@@ -13,21 +13,14 @@ source ${CONFIGFILE}
 rm -rf ${STRAINLOG}
 touch ${STRAINLOG}
 
-date >& ${STRAINLOG}
+date | tee -a ${STRAINLOG}
 
 rm -rf *.bcp
 
-${STRAINLOAD}/strainload.py >>& ${STRAINLOG}
-
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} PRB_Strain . PRB_Strain.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} PRB_Strain_Marker . PRB_Strain_Marker.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ACC_Accession . ACC_Accession.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} VOC_Annot . VOC_Annot.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} MGI_Note . MGI_Note.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
-${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} MGI_NoteChunk . MGI_NoteChunk.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
+${STRAINLOAD}/strainload.py | tee -a ${STRAINLOG}
 
 ${ALLCACHELOAD}/allstrain.csh | tee -a ${STRAINLOG}
-${PG_MGD_DBSCHEMADIR}/test/findmgi.csh  | tee -a ${STRAINLOG}
+${PG_MGD_DBSCHEMADIR}/test/findmgi.csh | tee -a ${STRAINLOG}
 
-date >>& ${STRAINLOG}
+date | tee -a ${STRAINLOG}
 
