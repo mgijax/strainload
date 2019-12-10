@@ -340,7 +340,7 @@ def setPrimaryKeys():
 
     global strainKey, strainmarkerKey, accKey, mgiKey, annotKey, noteKey
 
-    results = db.sql('select max(_Strain_key) + 1 as maxKey from PRB_Strain', 'auto')
+    results = db.sql(''' select nextval('prb_strain_seq') as maxKey ''', 'auto')
     strainKey = results[0]['maxKey']
 
     results = db.sql(''' select nextval('prb_strain_marker_seq') as maxKey ''', 'auto')
@@ -580,6 +580,10 @@ def bcpFiles():
 
     # update the AccessionMax value
     db.sql('select * from ACC_setMax (%d)' % (lineNum), None)
+    db.commit()
+
+    # update prb_strain_seq auto-sequence
+    db.sql(''' select setval('prb_strain_seq', (select max(_Strain_key) from PRB_Strain)) ''', None)
     db.commit()
 
     # update prb_strain_marker_seq auto-sequence
