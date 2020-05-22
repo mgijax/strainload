@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 #
 # Program: strainload.py
@@ -158,7 +157,7 @@ def exit(
         errorFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
         diagFile.close()
         errorFile.close()
-	inputFile.close()
+        inputFile.close()
     except:
         pass
 
@@ -191,12 +190,12 @@ def init():
         diagFile = open(diagFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % diagFileName)
-		
+                
     try:
         errorFile = open(errorFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % errorFileName)
-		
+                
     try:
         inputFile = open(inputFileName, 'r')
     except:
@@ -262,9 +261,9 @@ def verifySpecies(
         results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 26', 'auto')
 
         for r in results:
-	    speciesDict[r['term']] = r['_Term_key']
+            speciesDict[r['term']] = r['_Term_key']
 
-    if speciesDict.has_key(species):
+    if species in speciesDict:
             speciesKey = speciesDict[species]
     else:
             errorFile.write('Invalid Species (%d) %s\n' % (lineNum, species))
@@ -291,9 +290,9 @@ def verifyStrainType(
         results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 55', 'auto')
 
         for r in results:
-	    strainTypesDict[r['term']] = r['_Term_key']
+            strainTypesDict[r['term']] = r['_Term_key']
 
-    if strainTypesDict.has_key(strainType):
+    if strainType in strainTypesDict:
             strainTypeKey = strainTypesDict[strainType]
     else:
             errorFile.write('Invalid Strain Type (%d) %s\n' % (lineNum, strainType))
@@ -321,7 +320,7 @@ def verifyStrain(
     for r in results:
         strainDict[r['strain']] = r['_Strain_key']
 
-    if strainDict.has_key(strain):
+    if strain in strainDict:
             strainExistKey = strainDict[strain]
             errorFile.write('Strain Already Exists (%d) %s\n' % (lineNum, strain))
     else:
@@ -380,30 +379,30 @@ def processFile():
         tokens = line[:-1].split('\t')
 
         try:
-	    id = tokens[0]
-	    externalPrefix = id
-	    externalNumeric = ''
-	    #(externalPrefix, externalNumeric) = id.split(':')
-	    name = tokens[1]
-	    alleleIDs = tokens[2]
-	    strainType = tokens[3]
-	    species = tokens[4]
-	    isStandard = tokens[5]
-	    sooNote = tokens[6]
-	    externalLDB = tokens[7]
+            id = tokens[0]
+            externalPrefix = id
+            externalNumeric = ''
+            #(externalPrefix, externalNumeric) = id.split(':')
+            name = tokens[1]
+            alleleIDs = tokens[2]
+            strainType = tokens[3]
+            species = tokens[4]
+            isStandard = tokens[5]
+            sooNote = tokens[6]
+            externalLDB = tokens[7]
             externalTypeKey = tokens[8]
-	    annotations = tokens[9]
-	    createdBy = tokens[10]
-	    mutantNote = tokens[11]
-	    isPrivate = tokens[12]
-	    impcColonyNote = tokens[13]
+            annotations = tokens[9]
+            createdBy = tokens[10]
+            mutantNote = tokens[11]
+            isPrivate = tokens[12]
+            impcColonyNote = tokens[13]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
-	strainExistKey = verifyStrain(name, lineNum)
-	strainTypeKey = verifyStrainType(strainType, lineNum)
-	speciesKey = verifySpecies(species, lineNum)
-	createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
+        strainExistKey = verifyStrain(name, lineNum)
+        strainTypeKey = verifyStrainType(strainType, lineNum)
+        speciesKey = verifySpecies(species, lineNum)
+        createdByKey = loadlib.verifyUser(createdBy, 0, errorFile)
 
         if strainExistKey > 0 or strainTypeKey == 0 or speciesKey == 0 or createdByKey == 0:
             # set error flag to true
@@ -417,37 +416,37 @@ def processFile():
 
         strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, isGeneticBackground,
-	       createdByKey, createdByKey, cdate, cdate))
+               createdByKey, createdByKey, cdate, cdate))
 
-	# if Allele found, resolve to Marker
+        # if Allele found, resolve to Marker
 
-	if len(alleleIDs) > 0:
-	    allAlleles = alleleIDs.split('|')
-	    for a in allAlleles:
-		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
-		if alleleKey == 0:
-		    continue
-	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
-		markerKey = results[0]['_Marker_key']
+        if len(alleleIDs) > 0:
+            allAlleles = alleleIDs.split('|')
+            for a in allAlleles:
+                alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
+                if alleleKey == 0:
+                    continue
+                results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+                markerKey = results[0]['_Marker_key']
 
-		markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-	    		% (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
-	       		createdByKey, createdByKey, cdate, cdate))
-		strainmarkerKey = strainmarkerKey + 1
+                markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                        % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
+                        createdByKey, createdByKey, cdate, cdate))
+                strainmarkerKey = strainmarkerKey + 1
 
         # MGI Accession ID for all strain
 
         accFile.write('%d|%s%d|%s|%s|1|%d|%d|0|1|%s|%s|%s|%s\n' \
-        	% (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
-		createdByKey, createdByKey, cdate, cdate))
+                % (accKey, mgiPrefix, mgiKey, mgiPrefix, mgiKey, strainKey, mgiTypeKey, 
+                createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
         # external accession id
         # % (accKey, id, '', id, externalLDB, strainKey, externalTypeKey, 
-	#for ids that contain prefix:numeric
+        #for ids that contain prefix:numeric
         accFile.write('%d|%s|%s|%s|%s|%s|%s|0|1|%s|%s|%s|%s\n' \
           % (accKey, id, externalPrefix, externalNumeric, externalLDB, strainKey, externalTypeKey, 
-	     createdByKey, createdByKey, cdate, cdate))
+             createdByKey, createdByKey, cdate, cdate))
         accKey = accKey + 1
 
         # storing data in MGI_Note/MGI_NoteChunk
@@ -493,26 +492,26 @@ def processFile():
 
             noteKey = noteKey + 1
 
-	#
+        #
         # Annotations
         #
-	# _AnnotType_key = 1009
-	# _Qualifier_ke = 1614158
-	#
+        # _AnnotType_key = 1009
+        # _Qualifier_ke = 1614158
+        #
 
-	if len(annotations) > 0:
-	    annotations = annotations.split('|')
-	    for a in annotations:
+        if len(annotations) > 0:
+            annotations = annotations.split('|')
+            for a in annotations:
 
-	        # strain annotation type
-	        annotTypeKey = 1009
+                # strain annotation type
+                annotTypeKey = 1009
 
-	        # this is a null qualifier key
-	        annotQualifierKey = 1614158
+                # this is a null qualifier key
+                annotQualifierKey = 1614158
 
-	        annotTermKey = loadlib.verifyTerm('', 27, a, lineNum, errorFile)
-	        if annotTermKey == 0:
-		    continue
+                annotTermKey = loadlib.verifyTerm('', 27, a, lineNum, errorFile)
+                if annotTermKey == 0:
+                    continue
     
                 annotFile.write('%s|%s|%s|%s|%s|%s|%s\n' \
                   % (annotKey, annotTypeKey, strainKey, annotTermKey, annotQualifierKey, cdate, cdate))
@@ -547,7 +546,7 @@ def bcpFiles():
     currentDir = os.getcwd()
 
     bcp1 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
-	(bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'PRB_Strain', currentDir, strainFileName)
+        (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'PRB_Strain', currentDir, strainFileName)
 
     bcp2 = '%s %s %s %s %s %s "|" "\\n" mgd' % \
         (bcpCommand, db.get_sqlServer(), db.get_sqlDatabase(), 'PRB_Strain_Marker', currentDir, markerFileName)
@@ -603,4 +602,3 @@ setPrimaryKeys()
 processFile()
 bcpFiles()
 exit(0)
-

@@ -15,7 +15,7 @@ touch ${STRAINLOG}
 
 date >& ${STRAINLOG}
 
-${STRAINLOAD}/strainalleleload.py >>& ${STRAINLOG}
+${PYTHON} ${STRAINLOAD}/strainalleleload.py >>& ${STRAINLOG}
 
 ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} PRB_Strain . PRB_Strain.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}
 ${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} PRB_Strain_Marker . PRB_Strain_Marker.bcp ${COLDELIM} ${LINEDELIM} mgd | tee -a ${STRAINLOG}

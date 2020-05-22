@@ -17,8 +17,7 @@ date | tee -a ${STRAINLOG}
 
 rm -rf *.bcp
 
-${STRAINLOAD}/strainload.py | tee -a ${STRAINLOG}
-
+${PYTHON} ${STRAINLOAD}/strainload.py | tee -a ${STRAINLOG}
 ${ALLCACHELOAD}/allstrain.csh | tee -a ${STRAINLOG}
 ${PG_MGD_DBSCHEMADIR}/test/findmgi.csh | tee -a ${STRAINLOG}
 

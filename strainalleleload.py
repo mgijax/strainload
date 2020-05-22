@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 #
 # Program: strainalleleload.py
@@ -53,7 +52,6 @@
 
 import sys
 import os
-import string
 import db
 import mgi_utils
 import loadlib
@@ -107,7 +105,7 @@ def exit(status, message = None):
         errorFile.write('\n\nEnd Date/Time: %s\n' % (mgi_utils.date()))
         diagFile.close()
         errorFile.close()
-	inputFile.close()
+        inputFile.close()
     except:
         pass
 
@@ -142,12 +140,12 @@ def init():
         diagFile = open(diagFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % diagFileName)
-		
+                
     try:
         errorFile = open(errorFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % errorFileName)
-		
+                
     try:
         inputFile = open(inputFileName, 'r')
     except:
@@ -189,7 +187,7 @@ def verifyQualifier(qualifier, lineNum):
 
         qualifierKey = 0
 
-        if qualifiersDict.has_key(qualifier):
+        if qualifier in qualifiersDict:
                 qualifierKey = qualifiersDict[qualifier]
         else:
                 errorFile.write('Invalid Qualifier (%d) %s\n' % (lineNum, qualifier))
@@ -210,7 +208,7 @@ def loadDictionaries():
 
         results = db.sql('select _Term_key, term from VOC_Term where _Vocab_key = 31', 'auto')
         for r in results:
-		qualifiersDict[r['term']] = r['_Term_key']
+                qualifiersDict[r['term']] = r['_Term_key']
 
 def setPrimaryKeys():
         # requires:
@@ -251,52 +249,52 @@ def processFile():
         lineNum = lineNum + 1
 
         # Split the line into tokens
-        tokens = string.split(line[:-1], '\t')
+        tokens = str.split(line[:-1], '\t')
 
         try:
-	    strainID = tokens[0]
-	    alleleID = tokens[1]
-	    qualifier = tokens[2]
-	    createdBy = tokens[3]
+            strainID = tokens[0]
+            alleleID = tokens[1]
+            qualifier = tokens[2]
+            createdBy = tokens[3]
         except:
             exit(1, 'Invalid Line (%d): %s\n' % (lineNum, line))
 
-	if len(strainID) == 4:
-	    strainID = '00' + strainID
-	if len(strainID) == 3:
-	    strainID = '000' + strainID
-	if len(strainID) == 2:
-	    strainID = '0000' + strainID
-	if len(strainID) == 1:
-	    strainID = '00000' + strainID
+        if len(strainID) == 4:
+            strainID = '00' + strainID
+        if len(strainID) == 3:
+            strainID = '000' + strainID
+        if len(strainID) == 2:
+            strainID = '0000' + strainID
+        if len(strainID) == 1:
+            strainID = '00000' + strainID
 
-	strainKey = loadlib.verifyObject(strainID, strainTypeKey, None, lineNum, errorFile)
+        strainKey = loadlib.verifyObject(strainID, strainTypeKey, None, lineNum, errorFile)
 
-	# this could generate an error because the ID is a marker, not an allele
-	# just ignore the error in the error file if it gets resolved later
-	alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
-	markerKey = 0
+        # this could generate an error because the ID is a marker, not an allele
+        # just ignore the error in the error file if it gets resolved later
+        alleleKey = loadlib.verifyObject(alleleID, alleleTypeKey, None, lineNum, errorFile)
+        markerKey = 0
 
-	if alleleKey == 0:
-	    markerKey = loadlib.verifyObject(alleleID, markerTypeKey, None, lineNum, errorFile)
+        if alleleKey == 0:
+            markerKey = loadlib.verifyObject(alleleID, markerTypeKey, None, lineNum, errorFile)
 
-	qualifierKey = verifyQualifier(qualifier, lineNum)
-	createdByKey = loadlib.verifyUser(createdBy, lineNum, errorFile)
+        qualifierKey = verifyQualifier(qualifier, lineNum)
+        createdByKey = loadlib.verifyUser(createdBy, lineNum, errorFile)
 
-	if notDeleted:
-	    db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (createdByKey), None)
-	    notDeleted = 0
+        if notDeleted:
+            db.sql('delete PRB_Strain_Marker where _CreatedBy_key = %s' % (createdByKey), None)
+            notDeleted = 0
 
-	# if Allele found, resolve to Marker
+        # if Allele found, resolve to Marker
 
-	if alleleKey > 0:
-	    results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
-	    if len(results) > 0:
-		markerKey = results[0]['_Marker_key']
+        if alleleKey > 0:
+            results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+            if len(results) > 0:
+                markerKey = results[0]['_Marker_key']
 
         elif markerKey == 0:
-	    errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
-	    error = 1
+            errorFile.write('Invalid Allele (%s): %s\n' % (lineNum, alleleID))
+            error = 1
 
         if strainKey == 0 or markerKey == 0 or qualifierKey == 0:
             # set error flag to true
@@ -308,8 +306,8 @@ def processFile():
 
         # if no errors, process
 
-	if alleleKey == 0:
-	    alleleKey = ''
+        if alleleKey == 0:
+            alleleKey = ''
 
         strainFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainalleleKey, strainKey, markerKey, alleleKey, qualifierKey, createdByKey, createdByKey, loaddate, loaddate))
@@ -338,4 +336,3 @@ setPrimaryKeys()
 loadDictionaries()
 processFile()
 exit(0)
-
