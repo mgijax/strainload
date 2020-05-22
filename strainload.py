@@ -428,10 +428,14 @@ def processFile():
                     continue
                 results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
                 markerKey = results[0]['_Marker_key']
-
-                markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-                        % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
-                        createdByKey, createdByKey, cdate, cdate))
+                if markerKey != None:
+                        markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+                                % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
+                                createdByKey, createdByKey, cdate, cdate))
+                else:
+                        markerFile.write('%s|%s||%s|%s|%s|%s|%s|%s\n' \
+                                % (strainmarkerKey, strainKey, alleleKey, qualifierKey, 
+                                createdByKey, createdByKey, cdate, cdate))
                 strainmarkerKey = strainmarkerKey + 1
 
         # MGI Accession ID for all strain
