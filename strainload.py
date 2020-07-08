@@ -427,6 +427,8 @@ def processFile():
 		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
 		if alleleKey == 0:
 		    continue
+		if alleleKey == None:
+		    continue
 	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
 		markerKey = results[0]['_Marker_key']
                 if markerKey != None:
