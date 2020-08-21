@@ -416,27 +416,29 @@ def processFile():
 
         strainFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
             % (strainKey, speciesKey, strainTypeKey, name, isStandard, isPrivate, isGeneticBackground,
-               createdByKey, createdByKey, cdate, cdate))
+	       createdByKey, createdByKey, cdate, cdate))
 
-        # if Allele found, resolve to Marker
+	# if Allele found, resolve to Marker
 
-        if len(alleleIDs) > 0:
-            allAlleles = alleleIDs.split('|')
-            for a in allAlleles:
-                alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
-                if alleleKey == 0:
-                    continue
-                results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
-                markerKey = results[0]['_Marker_key']
+	if len(alleleIDs) > 0:
+	    allAlleles = alleleIDs.split('|')
+	    for a in allAlleles:
+		alleleKey = loadlib.verifyObject(a, alleleTypeKey, None, lineNum, errorFile)
+		if alleleKey == 0:
+		    continue
+		if alleleKey == None:
+		    continue
+	    	results = db.sql('select _Marker_key from ALL_Allele where _Allele_key = %s' % (alleleKey),  'auto')
+		markerKey = results[0]['_Marker_key']
                 if markerKey != None:
-                        markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-                                % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
-                                createdByKey, createdByKey, cdate, cdate))
+		        markerFile.write('%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
+	    		        % (strainmarkerKey, strainKey, markerKey, alleleKey, qualifierKey, 
+	       		        createdByKey, createdByKey, cdate, cdate))
                 else:
-                        markerFile.write('%s|%s||%s|%s|%s|%s|%s|%s\n' \
-                                % (strainmarkerKey, strainKey, alleleKey, qualifierKey, 
-                                createdByKey, createdByKey, cdate, cdate))
-                strainmarkerKey = strainmarkerKey + 1
+		        markerFile.write('%s|%s||%s|%s|%s|%s|%s|%s\n' \
+	    		        % (strainmarkerKey, strainKey, alleleKey, qualifierKey, 
+	       		        createdByKey, createdByKey, cdate, cdate))
+		strainmarkerKey = strainmarkerKey + 1
 
         # MGI Accession ID for all strain
 

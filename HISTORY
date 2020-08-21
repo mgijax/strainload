@@ -1,3 +1,15 @@
+TAG: strainload-6-0-15-3
+DATE: 07/08/2020
+STAFF: lec
+CHANGES: TR12332/IMSR/Strains
+check allele is None
+
+TAG: strainload-6-0-15-2
+DATE: 05/22/2020
+STAFF: lec
+CHANGES: TR12332/IMSR/Strains
+PRB_Strain_Marker/marker may be null
+
 TAG: strainload-6-0-15-1
 DATE: 01/29/2020
 STAFF: lec
